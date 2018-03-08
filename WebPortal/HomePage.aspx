@@ -10,7 +10,7 @@
     <form id="form1" runat="server">
         <div>
             <h1>
-            <asp:Label ID="Label1" runat="server" Text="Main menu, please choose one option:"></asp:Label>
+                <asp:Label ID="Label1" runat="server" Text="Main menu, please choose one option:"></asp:Label>
             </h1>
             <br />
             <asp:Button ID="Btn_newUser" runat="server" Text="New user registration" OnClick="Btn_newUser_Click" />
