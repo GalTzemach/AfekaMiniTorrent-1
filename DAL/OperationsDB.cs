@@ -43,12 +43,39 @@ namespace DAL
 
         public void logOffAllUsers()
         {
-            throw new NotImplementedException();
+            var users = from user in DB.Users
+                        select user;
+
+            if (users.Count() != 0)
+            {
+                foreach (User u in users)
+                {
+                    u.IsActive = false;
+                }
+
+                lock (thisLock)
+                {
+                    DB.SubmitChanges();
+                }
+            }
         }
 
         public void clearFileTable()
         {
-            throw new NotImplementedException();
+            var files = from file in DB.Files
+                        select file;
+
+            if (files.Count() != 0)
+            {
+                foreach (File f in files)
+                {
+                    DB.Files.DeleteOnSubmit(f);
+                }
+                lock (thisLock)
+                {
+                    DB.SubmitChanges();
+                }
+            }
         }
 
         public void AddNewUser(string userName, string password)
@@ -99,7 +126,120 @@ namespace DAL
                 {
                     return null;
                 }
-            }   
+            }
+        }
+
+        public int getUser(string userName, string password)
+        {
+            var users = from user in DB.Users
+                        where user.UserName == userName
+                        where user.Password == password
+                        select user;
+
+            if (users.Count() != 0)
+            {
+                foreach (User user in users)
+                {
+                    if (!user.IsDisable)
+                    {
+                        if (user.IsActive)
+                            return 2;//already connected
+                        else
+                        {
+                            user.IsActive = true;
+                            lock (thisLock)
+                            {
+                                DB.SubmitChanges();
+                            }
+                            return 1; //all good
+                        }
+                    }
+                    else
+                        return 3; //not enabled
+                }
+            }
+
+            return 0; //not created
+        }
+
+        public void logOffUser(string userName)
+        {
+            var users = from user in DB.Users
+                        where user.UserName == userName
+                        select user;
+
+            if (users.Count() != 0)
+            {
+                foreach (User user in users)
+                {
+                    user.IsActive = false;
+                }
+                lock (thisLock)
+                {
+                    DB.SubmitChanges();
+                }
+            }
+        }
+
+        public void removeFile(string fileName, long fileSize)
+        {
+            var files = from file in DB.Files
+                        where file.FileName == fileName
+                        where file.FileSize == fileSize
+                        select file;
+
+            if (files.Count() != 0)
+            {
+                foreach (File file in files)
+                {
+                    if (file.NumOfPeers == 1)
+                        DB.Files.DeleteOnSubmit(file);
+                    else
+                        file.NumOfPeers--;
+                }
+
+                lock (thisLock)
+                {
+                    DB.SubmitChanges();
+                }
+            }
+        }
+
+        public void updatePear(string fileName, long fileSize)
+        {
+            var files = from file in DB.Files
+                        where file.FileName == fileName
+                        where file.FileSize == fileSize
+                        select file;
+
+            if (files.Count() != 0)
+            {
+                foreach (File file in files)
+                {
+                    file.NumOfPeers++;
+                }
+                lock (thisLock)
+                {
+                    DB.SubmitChanges();
+                }
+            }
+        }
+
+        public void addNewFile(string fileName, long fileSize)
+        {
+            File f = new File
+            {
+                FileName = fileName,
+                FileSize = fileSize,
+                NumOfPeers = 1
+            };
+
+            DB.Files.InsertOnSubmit(f);
+
+            lock (thisLock)
+            {
+                DB.SubmitChanges();
+            }
         }
     }
 }

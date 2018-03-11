@@ -17,6 +17,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using DAL;
+using Newtonsoft.Json;
 
 namespace Server
 {
@@ -28,7 +29,7 @@ namespace Server
         private TcpListener serverListener = null;
         private static BackgroundWorker bw = new BackgroundWorker();
         private delegate void myDelegate(string s);
-        //private static ServerInformation serverInfo;
+        private static ServerInformation serverInfo;
         private string serverIp = "192.168.1.156"; //server ip address
         private static OperationsDB dba = new OperationsDB();
 
@@ -38,8 +39,8 @@ namespace Server
             dba.clearFileTable();
             InitializeComponent();
 
-            //serverInfo = new ServerInformation();
-            //serverInfo.Show();
+            serverInfo = new ServerInformation();
+            serverInfo.Show();
             bw.DoWork += bw_DoWork;
             serverStart();
         }
