@@ -1,9 +1,27 @@
-﻿<Application x:Class="Client.App"
+﻿<Application x:Class="MiniTorrent.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Client"
-             StartupUri="UserWindow.xaml">
+             xmlns:local="clr-namespace:MiniTorrent"
+             StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <Style x:Key="commonStyle"
+           TargetType="Control">
+            <Setter Property="FontSize"
+              Value="13" />
+            <Setter Property="FontFamily"
+              Value="Comic Sans MS" />
+            <Setter Property="FontWeight"
+              Value="Bold" />
+        </Style>
+        <Style TargetType="Button"
+           BasedOn="{StaticResource commonStyle}">
+            <Setter Property="Background"
+              Value="#FFC9C9D8" />
+            <Setter Property="Foreground"
+              Value="Black" />
+        </Style>
+        <Style TargetType="Label"
+           BasedOn="{StaticResource commonStyle}">
+        </Style>
     </Application.Resources>
 </Application>

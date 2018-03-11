@@ -58,7 +58,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ClientSearchReq.cs" />
-    <Compile Include="FileSetails.cs" />
+    <Compile Include="FileDetails.cs" />
     <Compile Include="ServerInformation.xaml.cs">
       <DependentUpon>ServerInformation.xaml</DependentUpon>
     </Compile>
