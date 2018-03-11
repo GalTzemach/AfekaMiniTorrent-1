@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="UserWindow" Height="400" Width="1000">
+        Title="UserWindow" Height="422.683" Width="734.634">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*"/>
@@ -40,7 +40,7 @@
             <GroupBox Header="Uploads" Grid.Column="1">
                 <DataGrid x:Name="uploads_DataGrid" />
             </GroupBox>
-            
+
         </Grid>
 
         <GroupBox Header="Downloads" Grid.Row="1">
