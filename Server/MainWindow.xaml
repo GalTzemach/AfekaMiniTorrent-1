@@ -7,6 +7,6 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        
+        <TextBox x:Name="serverLog" HorizontalAlignment="Left" Height="287" Margin="19,21,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="510" VerticalScrollBarVisibility="Auto" IsReadOnly="True"/>
     </Grid>
 </Window>

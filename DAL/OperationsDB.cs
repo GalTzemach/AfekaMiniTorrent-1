@@ -41,6 +41,16 @@ namespace DAL
                     select file).Count();
         }
 
+        public void logOffAllUsers()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void clearFileTable()
+        {
+            throw new NotImplementedException();
+        }
+
         public void AddNewUser(string userName, string password)
         {
             User user = new User
