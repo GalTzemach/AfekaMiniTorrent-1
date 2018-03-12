@@ -1,43 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server
 {
     [Serializable]
     public class TransferFileDetails
     {
-        private string fileName;
-        private long fileSize;
-        private List<Pear> pears;
-
-        public string FileName { get { return fileName; } set { fileName = value; } }
-        public long FileSize { get { return fileSize; } set { fileSize = value; } }
-        public List<Pear> Pears { get { return pears; } set { pears = value; } }
+        public string FileName { get; set; }
+        public long FileSize { get; set; }
+        public List<Peer> PeersList { get; set; }
 
         public TransferFileDetails(string fileName, long fileSize)
         {
-            this.fileName = fileName;
-            this.fileSize = fileSize;
-            pears = new List<Pear>();
+            this.FileName = fileName;
+            this.FileSize = fileSize;
+            this.PeersList = new List<Peer>();
         }
     }
 
     [Serializable]
-    public class Pear
+    public class Peer
     {
-        private string ip;
-        private int port;
+        public string Ip { get; set; }
+        public int Port { get; set; }
 
-        public string Ip { get { return ip; } set { ip = value; } }
-        public int Port { get { return port; } set { port = value; } }
-
-        public Pear(string ip, int port)
+        public Peer(string ip, int port)
         {
-            this.ip = ip;
-            this.port = port;
+            this.Ip = ip;
+            this.Port = port;
         }
     }
 }

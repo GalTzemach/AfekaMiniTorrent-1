@@ -1,150 +1,150 @@
-﻿using System;
+﻿using DAL;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using DAL;
 
 namespace Server
 {
-    //class that shows who is online and which files he shares
+    //This class shows all active users and their files.
 
     /// <summary>
     /// Interaction logic for ServerInformation.xaml
     /// </summary>
     public partial class ServerInformation : Window
     {
-        private Dictionary<FileDetails, List<Users>> serverFiles;
-        private List<Users> onLineUsers;
-        private static object _lock = new object();
-        private static BackgroundWorker bwUpdate = new BackgroundWorker();
-        private static BackgroundWorker bwSelect = new BackgroundWorker();
-        private delegate void mySelectDelegate(Users u);
-        private delegate void myUpdateDelegate();
+        private static BackgroundWorker bwUpdateUserList;
+        private static BackgroundWorker bwUpdateFileList;
+        private delegate void selectDelegate(User u);
+        private delegate void updateDelegate();
+        private static object thisLock = new object();
 
-        public List<Users> OnLineUsers { get { return onLineUsers; } set { onLineUsers = value; } }
-        public Dictionary<FileDetails, List<Users>> ServerFiles { get { return serverFiles; } set { serverFiles = value; } }
+        public List<User> ActiveUsers { get; set; }
+        public Dictionary<FileDetails, List<User>> ServerFileList { get; set; }
 
         public ServerInformation()
         {
             InitializeComponent();
-            serverFiles = new Dictionary<FileDetails, List<Users>>();
-            onLineUsers = new List<Users>();
-            dataGrid.ItemsSource = serverFiles;
-            dataGrid1.ItemsSource = onLineUsers;
-            bwUpdate.DoWork += bwUpdate_DoWork;
-            bwSelect.DoWork += bwSelect_DoWork;
+
+            ActiveUsers = new List<User>();
+            ServerFileList = new Dictionary<FileDetails, List<User>>();
+            dataGrid_users.ItemsSource = ActiveUsers;
+            dataGrid_files.ItemsSource = ServerFileList;
+
+            bwUpdateUserList = new BackgroundWorker();
+            bwUpdateFileList = new BackgroundWorker();
+            bwUpdateUserList.DoWork += BwUpdate_DoWork;
+            bwUpdateFileList.DoWork += BwSelect_DoWork;
         }
 
-        private void updateSelect(Users u)
+        private void UpdateFileList(User selectedUser)
         {
-            dataGrid.ItemsSource = u.FileList;
+            dataGrid_files.ItemsSource = selectedUser.FileList;
         }
 
-        private void updateTable()
+        private void UpdateUserList()
         {
-            dataGrid1.Items.Refresh();
+            dataGrid_users.Items.Refresh();
         }
 
-        private void bwSelect_DoWork(object sender, DoWorkEventArgs e)
+        private void BwSelect_DoWork(object sender, DoWorkEventArgs e)
         {
-            mySelectDelegate deli = new mySelectDelegate(updateSelect);
-            dataGrid.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, deli, (Users)e.Argument);
+            selectDelegate selectDel = new selectDelegate(UpdateFileList);
+            dataGrid_files.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, selectDel, (User)e.Argument);
         }
 
-        private void bwUpdate_DoWork(object sender, DoWorkEventArgs e)
+        private void BwUpdate_DoWork(object sender, DoWorkEventArgs e)
         {
-            myUpdateDelegate deli = new myUpdateDelegate(updateTable);
-            dataGrid1.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, deli);
+            updateDelegate updateDel = new updateDelegate(UpdateUserList);
+            dataGrid_users.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, updateDel);
         }
 
-        public void addUserFiles(Users user, OperationsDB dba) //user log in
+        // Execute when user Log in.
+        public void AddUserFiles(User user, OperationsDB DB)
         {
-            lock (_lock)
+            lock (thisLock)
             {
-                if (!onLineUsers.Contains(user))
-                    onLineUsers.Add(user);
+                if (!ActiveUsers.Contains(user))
+                    ActiveUsers.Add(user);
             }
 
-            foreach (FileDetails f in user.FileList)
+            foreach (FileDetails file in user.FileList)
             {
-                if (serverFiles.ContainsKey(f)) //file exsits
+                if (ServerFileList.ContainsKey(file)) 
                 {
-                    //file in list -> add new user as source to download
-                    lock (_lock)
+                    // This file already exist in list.
+                    // Add this user as adition peer to download.
+                    lock (thisLock)
                     {
-                        if (!serverFiles[f].Contains(user))
+                        if (!ServerFileList[file].Contains(user))
                         {
-                            serverFiles[f].Add(user);
-                            dba.updatePear(f.FileName, f.FileSize);
+                            ServerFileList[file].Add(user);
+                            DB.AddPeerToFile(file.FileName, file.FileSize);
                         }
                     }
                 }
 
                 else
                 {
-                    //new file to share
-                    lock (_lock)
+                    // This file new in list.
+                    lock (thisLock)
                     {
-                        serverFiles.Add(f, new List<Users>());
-                        serverFiles[f].Add(user);
-                        dba.addNewFile(f.FileName, f.FileSize);
+                        ServerFileList.Add(file, new List<User>());
+                        ServerFileList[file].Add(user);
+                        DB.AddFile(file.FileName, file.FileSize);
                     }
                 }
             }
 
-            while (bwUpdate.IsBusy) ;
-            bwUpdate.RunWorkerAsync();
+            while (bwUpdateUserList.IsBusy) ;
+            bwUpdateUserList.RunWorkerAsync();
         }
 
-        public void removeUserFiles(Users user) //user log out
+        // Execute when user Log out.
+        public void DeleteUserFiles(User user) 
         {
-            foreach (FileDetails f in user.FileList)
+            foreach (FileDetails file in user.FileList)
             {
-                if (serverFiles.ContainsKey(f)) //file exsits
+                if (ServerFileList.ContainsKey(file)) 
                 {
-                    if (serverFiles[f].Contains(user))
+                    // File exsits in list.
+                    if (ServerFileList[file].Contains(user))
                     {
-                        serverFiles[f].Remove(user);
+                        // This user in owner of this file. 
+                        ServerFileList[file].Remove(user);
 
-                        if (serverFiles[f].Count == 0)
-                            serverFiles.Remove(f);
+                        // Delete this file if there is no longer more owners.
+                        if (ServerFileList[file].Count == 0)
+                            ServerFileList.Remove(file);
                     }
                 }
             }
 
-            if (onLineUsers.Contains(user))
-                onLineUsers.Remove(user);
+            // Delete user from list if is active.
+            if (ActiveUsers.Contains(user))
+                ActiveUsers.Remove(user);
 
-            while (bwUpdate.IsBusy) ;
-            bwUpdate.RunWorkerAsync();
+            while (bwUpdateUserList.IsBusy) ;
+            bwUpdateUserList.RunWorkerAsync();
         }
 
-        public bool isUserActive(string userName, string password)
+        public bool IsActiveUser(string userName, string password)
         {
-            foreach (Users u in OnLineUsers)
+            foreach (User user in ActiveUsers)
             {
-                if (u.UserName.Equals(userName) && u.Password.Equals(password))
+                if (user.UserName.Equals(userName) && user.Password.Equals(password))
                     return true;
             }
             return false;
         }
 
-        private void dataGrid1_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void DataGrid_users_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count > 0)
-                bwSelect.RunWorkerAsync(e.AddedItems[0]);
+                bwUpdateFileList.RunWorkerAsync(e.AddedItems[0]);
+
             else
-                dataGrid.ItemsSource = null;
+                dataGrid_files.ItemsSource = null;
         }
     }
 }

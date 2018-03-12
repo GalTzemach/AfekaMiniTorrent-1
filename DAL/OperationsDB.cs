@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DAL
 {
@@ -41,9 +38,10 @@ namespace DAL
                     select file).Count();
         }
 
-        public void logOffAllUsers()
+        public void LogOffAllUsers()
         {
-            var users = from user in DB.Users
+            var users = from user
+                        in DB.Users
                         select user;
 
             if (users.Count() != 0)
@@ -60,10 +58,17 @@ namespace DAL
             }
         }
 
-        public void clearFileTable()
+        public void DeleteAllFiles()
         {
-            var files = from file in DB.Files
+            var files = from file
+                        in DB.Files
                         select file;
+
+            //DB.Files.DeleteAllOnSubmit(files);
+            //lock (thisLock)
+            //{
+            //    DB.SubmitChanges();
+            //}
 
             if (files.Count() != 0)
             {
@@ -78,7 +83,7 @@ namespace DAL
             }
         }
 
-        public void AddNewUser(string userName, string password)
+        public void AddUser(string userName, string password)
         {
             User user = new User
             {
@@ -112,14 +117,15 @@ namespace DAL
             {
                 return null;
             }
+
             else
             {
                 try
                 {
-                    DataSet1TableAdapters.FileTableAdapter fta = new DataSet1TableAdapters.FileTableAdapter();
-                    DataSet1 ds = new DataSet1();
-                    fta.FillBy(ds.File, fileName);
-                    return ds;
+                    DataSet1TableAdapters.FileTableAdapter adapter = new DataSet1TableAdapters.FileTableAdapter();
+                    DataSet1 dataSet = new DataSet1();
+                    adapter.FillBy(dataSet.File, fileName);
+                    return dataSet;
                 }
 
                 catch
@@ -129,9 +135,15 @@ namespace DAL
             }
         }
 
-        public int getUser(string userName, string password)
+        public int GetUserStatus(string userName, string password)
         {
-            var users = from user in DB.Users
+            // 0 = User not exist.
+            // 1 = Connecting the user.
+            // 2 = User alredy connected.
+            // 3 = User Disable.
+
+            var users = from user
+                        in DB.Users
                         where user.UserName == userName
                         where user.Password == password
                         select user;
@@ -143,7 +155,7 @@ namespace DAL
                     if (!user.IsDisable)
                     {
                         if (user.IsActive)
-                            return 2;//already connected
+                            return 2; // User alredy connected.
                         else
                         {
                             user.IsActive = true;
@@ -151,20 +163,21 @@ namespace DAL
                             {
                                 DB.SubmitChanges();
                             }
-                            return 1; //all good
+                            return 1; // Connecting the user.
                         }
                     }
                     else
-                        return 3; //not enabled
+                        return 3; // User Disable.
                 }
             }
 
-            return 0; //not created
+            return 0; // User not exist.
         }
 
-        public void logOffUser(string userName)
+        public void LogOffUser(string userName)
         {
-            var users = from user in DB.Users
+            var users = from user
+                        in DB.Users
                         where user.UserName == userName
                         select user;
 
@@ -181,9 +194,10 @@ namespace DAL
             }
         }
 
-        public void removeFile(string fileName, long fileSize)
+        public void DeletePeerFromFile(string fileName, long fileSize)
         {
-            var files = from file in DB.Files
+            var files = from file
+                        in DB.Files
                         where file.FileName == fileName
                         where file.FileSize == fileSize
                         select file;
@@ -205,9 +219,10 @@ namespace DAL
             }
         }
 
-        public void updatePear(string fileName, long fileSize)
+        public void AddPeerToFile(string fileName, long fileSize)
         {
-            var files = from file in DB.Files
+            var files = from file
+                        in DB.Files
                         where file.FileName == fileName
                         where file.FileSize == fileSize
                         select file;
@@ -225,7 +240,7 @@ namespace DAL
             }
         }
 
-        public void addNewFile(string fileName, long fileSize)
+        public void AddFile(string fileName, long fileSize)
         {
             File f = new File
             {

@@ -1,23 +1,13 @@
-﻿using System;
+﻿using DAL;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using DAL;
-using Newtonsoft.Json;
 
 namespace Server
 {
@@ -26,196 +16,223 @@ namespace Server
     /// </summary>
     public partial class MainWindow : Window
     {
-        private TcpListener serverListener = null;
-        private static BackgroundWorker bw = new BackgroundWorker();
+        private const string SERVER_IP = "192.168.1.156";
+        private const int SERVER_LISTENER_PORT = 8006;
+
         private delegate void myDelegate(string s);
+        private TcpListener serverListener;
+        private static BackgroundWorker bw;
         private static ServerInformation serverInfo;
-        private string serverIp = "192.168.1.156"; //server ip address
-        private static OperationsDB dba = new OperationsDB();
+        private static OperationsDB DB = new OperationsDB();
 
         public MainWindow()
         {
-            dba.logOffAllUsers();
-            dba.clearFileTable();
+            DB.LogOffAllUsers();
+            DB.DeleteAllFiles();
+
             InitializeComponent();
 
             serverInfo = new ServerInformation();
             serverInfo.Show();
-            bw.DoWork += bw_DoWork;
-            serverStart();
+
+            bw = new BackgroundWorker();
+            bw.DoWork += Bw_DoWork;
+
+            ServerStart();
         }
 
-        //add strings to server log
-        private void bw_DoWork(object sender, DoWorkEventArgs e)
+        // Writing a message to Log in the background
+        private void Bw_DoWork(object sender, DoWorkEventArgs e)
         {
-            myDelegate deli = new myDelegate(appendToTextBox);
-            serverLog.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, deli, e.Argument.ToString());
+            myDelegate delegate1 = new myDelegate(WriteToLog);
+            TextBox_serverLog.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, delegate1, e.Argument.ToString());
         }
 
-        private void appendToTextBox(string s)
+        private void WriteToLog(string message)
         {
-            serverLog.AppendText(s);
-            serverLog.ScrollToEnd();
+            TextBox_serverLog.AppendText(message);
+            TextBox_serverLog.ScrollToEnd();
         }
 
-        //start listening to clients request
-        public async void serverStart()
+        // Server start listening to clients request.
+        public async void ServerStart()
         {
             try
             {
-                serverListener = new TcpListener(IPAddress.Parse(serverIp), 8006);
-                int counter = 0;
+                serverListener = new TcpListener(IPAddress.Parse(SERVER_IP), SERVER_LISTENER_PORT);
                 serverListener.Start();
-                serverLog.AppendText("Server Started\n");
+                TextBox_serverLog.AppendText("Server start Listening for new client request.\n");
 
-                counter = 0;
                 while (true)
                 {
-                    serverLog.AppendText("wait for connections\n");
+                    TextBox_serverLog.AppendText("Server wait for a new connection...\n");
                     TcpClient clientSocket = await serverListener.AcceptTcpClientAsync();
-                    counter += 1;
-                    serverLog.AppendText("Client No:" + Convert.ToString(counter) + " started!\n");
-                    handleClinet client = new handleClinet();
-                    client.startClient(clientSocket, Convert.ToString(counter));
+                    TextBox_serverLog.AppendText("New client Connected to server.\n");
+                    HandleAClinet client = new HandleAClinet(clientSocket);
                 }
             }
+
             catch (Exception e)
             {
-                serverLog.AppendText(e.ToString());
+                TextBox_serverLog.AppendText(e.ToString());
             }
+
             finally
             {
-                serverLog.AppendText("exit");
+                TextBox_serverLog.AppendText("Server stop.");
                 serverListener.Stop();
             }
         }
 
-        //Class to handle each client request separatly
-        public class handleClinet
+        // This class handle each client request.
+        public class HandleAClinet
         {
             private TcpClient clientSocket;
-            private string clNo;
-            private Users currentUser;
+            private User currentUser;
+            private NetworkStream stream;
 
-            public void startClient(TcpClient inClientSocket, string clineNo)
+            public HandleAClinet(TcpClient clientSocket)
             {
-                this.clientSocket = inClientSocket;
-                this.clNo = clineNo;
-                Thread t = new Thread(newClient);
-                t.Start();
-            }
-            private void newClient()
-            {
-                NetworkStream ns = clientSocket.GetStream();
-                receiveJsonFromClient(ns);
+                this.clientSocket = clientSocket;
+                this.stream = this.clientSocket.GetStream();
+
+                Thread thread = new Thread(StartNewClient);
+                thread.Start();
             }
 
-            private async void receiveJsonFromClient(NetworkStream ns)
+            private void StartNewClient()
             {
-                string jsonFile;
-                byte[] jsonBytes;
-                byte[] jsonLengthBytes = new byte[4]; //int32
+                ReceiveUserInfo();
+            }
 
-                await ns.ReadAsync(jsonLengthBytes, 0, 4); // int32
+            private async void ReceiveUserInfo()
+            {
+                string jsonFile; // As string.
+                byte[] jsonBytes; // As json.
+                byte[] jsonSize = new byte[4]; // The Size (int32).
 
+                // Read size.
+                await stream.ReadAsync(jsonSize, 0, 4);
                 while (bw.IsBusy) ;
-                bw.RunWorkerAsync("Json length received\n");
+                bw.RunWorkerAsync("Json size received from client.\n");
+                jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
 
-                jsonBytes = new byte[BitConverter.ToInt32(jsonLengthBytes, 0)];
-                await ns.ReadAsync(jsonBytes, 0, jsonBytes.Length);
-
+                // Read User object as Json. 
+                await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
                 while (bw.IsBusy) ;
-                bw.RunWorkerAsync("Json received\n");
+                bw.RunWorkerAsync("User object as json received from client.\n");
 
+                // Convert to user object from Json.
                 jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
+                currentUser = JsonConvert.DeserializeObject<User>(jsonFile);
 
-                currentUser = JsonConvert.DeserializeObject<Users>(jsonFile);
-
-                addNewUser(ns, currentUser);
+                // Update users list.
+                AddNewUser(stream, currentUser);
             }
 
-            private async void addNewUser(NetworkStream ns, Users currentUser)
+            private async void AddNewUser(NetworkStream stream, User newUser)
             {
                 try
                 {
                     byte[] answer = new byte[1];
-                    int state = 0;
+                    int status = 0;
+                    // 0 = User not exist.
+                    // 1 = Connecting the user.
+                    // 2 = User alredy connected.
+                    // 3 = User Disable.
 
-                    if (currentUser != null)
+                    if (newUser != null)
                     {
-                        state = dba.getUser(currentUser.UserName, currentUser.Password);
-                        if (state == 1)
+                        status = DB.GetUserStatus(newUser.UserName, newUser.Password);
+
+                        if (status == 1)
                         {
-                            if (!serverInfo.OnLineUsers.Contains(currentUser))
+                            if (!serverInfo.ActiveUsers.Contains(newUser))
                             {
-                                serverInfo.addUserFiles(currentUser, dba);
+                                // Add user files to server.
+                                serverInfo.AddUserFiles(newUser, DB);
                                 answer[0] = 1;
-                                await ns.WriteAsync(answer, 0, 1);
-                                clientRequestHandler(ns);
+                                await stream.WriteAsync(answer, 0, 1);
+                                FileRequestHandler();
                             }
                         }
                         else
                         {
-                            answer[0] = (byte)state;
-                            await ns.WriteAsync(answer, 0, 1);
+                            answer[0] = (byte)status;
+                            await stream.WriteAsync(answer, 0, 1);
                         }
                     }
                 }
+
                 catch (Exception e)
                 {
                     MessageBoxResult result = MessageBox.Show(e.ToString(), "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 }
             }
 
-            private async void clientRequestHandler(NetworkStream ns)
+            private async void FileRequestHandler()
             {
                 while (true)
                 {
-                    string jsonFile;
-                    byte[] jsonBytes;
-                    byte[] jsonLengthBytes = new byte[4]; //int32
-                    List<TransferFileDetails> tfList = new List<TransferFileDetails>();
+                    // The client wait for new file request.
+
+                    string jsonFile; // As string.
+                    byte[] jsonBytes;// As json.
+                    byte[] jsonSize = new byte[4]; // The Size (int32).
+                    List<TransferFileDetails> filesSearchResult = new List<TransferFileDetails>();
+
                     try
                     {
-                        await ns.ReadAsync(jsonLengthBytes, 0, 4); // int32
-
-                        jsonBytes = new byte[BitConverter.ToInt32(jsonLengthBytes, 0)];
-                        await ns.ReadAsync(jsonBytes, 0, jsonBytes.Length);
-
+                        // Read size.
+                        await stream.ReadAsync(jsonSize, 0, 4);
                         while (bw.IsBusy) ;
-                        bw.RunWorkerAsync("Search request received\n");
+                        bw.RunWorkerAsync("File request received.\n");
+                        jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
 
+                        // Read SearchRequest object As json.
+                        await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
+
+                        // Convert to SearchRequest object from Json.
                         jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
+                        SearchRequest searchRequst = JsonConvert.DeserializeObject<SearchRequest>(jsonFile);
 
-                        ClientSearchReq csr = JsonConvert.DeserializeObject<ClientSearchReq>(jsonFile);
-
-                        if (csr.FileName.Equals("exit"))
+                        // Execute when user press X on his window.
+                        if (searchRequst.FileName.Equals("exit"))
                         {
-                            ns.Close();
-                            serverInfo.removeUserFiles(currentUser);
-                            dba.logOffUser(currentUser.UserName);
-                            foreach (FileDetails f in currentUser.FileList)
-                                dba.removeFile(f.FileName, f.FileSize);
+                            stream.Close();
+                            serverInfo.DeleteUserFiles(currentUser);
+                            DB.LogOffUser(currentUser.UserName);
+
+                            foreach (FileDetails file in currentUser.FileList)
+                                DB.DeletePeerFromFile(file.FileName, file.FileSize);
+
                             while (bw.IsBusy) ;
-                            bw.RunWorkerAsync(currentUser.UserName + " exit\n");
+                            bw.RunWorkerAsync(currentUser.UserName + " is Loged off now.\n");
+
                             break;
                         }
 
-                        bool fileFoundOnServer = false;
-                        if (serverInfo.isUserActive(csr.UserName, csr.Password))
+                        bool fileExistInServer = false;
+
+                        // Check if user is active.
+                        if (serverInfo.IsActiveUser(searchRequst.UserName, searchRequst.Password))
                         {
-                            foreach (FileDetails sf in serverInfo.ServerFiles.Keys)
+                            foreach (FileDetails file in serverInfo.ServerFileList.Keys)
                             {
-                                if (sf.FileName.Contains(csr.FileName))
+                                // Looking for some or all of the fileName.
+                                if (file.FileName.Contains(searchRequst.FileName))
                                 {
-                                    fileFoundOnServer = true;
-                                    tfList.Add(filesDetailsbuilder(sf));
+                                    fileExistInServer = true;
+                                    filesSearchResult.Add(CreateTransferFileDetails(file));
                                 }
                             }
-                            if (fileFoundOnServer)
-                                createAndSendJson(ns, tfList);
+
+                            if (fileExistInServer)
+                                SendFileListAsJson(filesSearchResult);
+
                             else
-                                ns.WriteByte(0);
+                                // File not found in Server.
+                                stream.WriteByte(0);
                         }
                     }
                     catch (Exception e)
@@ -225,40 +242,40 @@ namespace Server
                 }
             }
 
-            private TransferFileDetails filesDetailsbuilder(FileDetails file)
+            private TransferFileDetails CreateTransferFileDetails(FileDetails file)
             {
-                TransferFileDetails tf = new TransferFileDetails(file.FileName, file.FileSize);
+                TransferFileDetails transferFile = new TransferFileDetails(file.FileName, file.FileSize);
 
-                foreach (Users u in serverInfo.ServerFiles[file])
-                    tf.Pears.Add(new Pear(u.Ip, u.UpPort));
+                foreach (User user in serverInfo.ServerFileList[file])
+                    transferFile.PeersList.Add(new Peer(user.Ip, user.UpPort));
 
-                return tf;
+                return transferFile;
             }
 
-            private async void createAndSendJson(NetworkStream ns, List<TransferFileDetails> tfList)
+            private async void SendFileListAsJson(List<TransferFileDetails> transferFileList)
             {
-                ns.WriteByte(1);
-                string jasonStriing = JsonConvert.SerializeObject(tfList);
+                // File/s found in Server.
+                stream.WriteByte(1);
 
-                List<TransferFileDetails> tfd = JsonConvert.DeserializeObject<List<TransferFileDetails>>(jasonStriing);
+                // Convert transferFileList (List<TransferFileDetails>) to json before send.
+                string jsonString = JsonConvert.SerializeObject(transferFileList);
+                byte[] jsonFile = ASCIIEncoding.ASCII.GetBytes(jsonString);
+                byte[] jsonSize = BitConverter.GetBytes(jsonFile.Length);
 
-                byte[] jsonFile = ASCIIEncoding.ASCII.GetBytes(jasonStriing);
-                byte[] jsonFileLength = BitConverter.GetBytes(jsonFile.Length);
+                // Write size.
+                await stream.WriteAsync(jsonSize, 0, jsonSize.Length);
 
-                await ns.WriteAsync(jsonFileLength, 0, jsonFileLength.Length);
-                await ns.WriteAsync(jsonFile, 0, jsonFile.Length);
+                // Write as json.
+                await stream.WriteAsync(jsonFile, 0, jsonFile.Length);
             }
         }
 
-        private void serverClose(object sender, CancelEventArgs e)
+        private void ServerClose(object sender, CancelEventArgs e)
         {
-            dba.logOffAllUsers();
-            dba.clearFileTable();
+            DB.LogOffAllUsers();
+            DB.DeleteAllFiles();
             serverInfo.Close();
+            serverListener.Stop();
         }
-
-
-
-
     }
 }

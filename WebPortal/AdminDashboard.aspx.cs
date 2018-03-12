@@ -73,7 +73,7 @@ public partial class AdminDashboard : System.Web.UI.Page
         }
         else
         {
-            DB.AddNewUser(UserName.Text.Trim().ToString(), Password.Text.Trim().ToString());
+            DB.AddUser(UserName.Text.Trim().ToString(), Password.Text.Trim().ToString());
             GridView1.DataBind();
             Lbl_userNameExist.Visible = false;
             Lbl_emptyFields.Visible = false;

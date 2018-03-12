@@ -23,7 +23,7 @@ public partial class CreateNewUser : System.Web.UI.Page
         }
         else
         {
-            DB.AddNewUser(UserName.Text.Trim().ToString(), Password.Text.Trim().ToString());
+            DB.AddUser(UserName.Text.Trim().ToString(), Password.Text.Trim().ToString());
             Response.Redirect("UserCreated.aspx");
         }
     }
