@@ -4,35 +4,28 @@ namespace MiniTorrent
 {
     public class TransferFileDetails
     {
-        private string fileName;
-        private long fileSize;
-        private List<Pear> pears;
-
-        public string FileName { get { return fileName; } set { fileName = value; } }
-        public long FileSize { get { return fileSize; } set { fileSize = value; } }
-        public List<Pear> Pears { get { return pears; } set { pears = value; } }
-        public int PearsCount { get { return pears.Count; } }
+        public string FileName { get; set; }
+        public long FileSize { get; set; }
+        public int PeersCount { get; set; }
+        public List<Peer> Peers { get; set; }
 
         public TransferFileDetails(string fileName, long fileSize)
         {
-            this.fileName = fileName;
-            this.fileSize = fileSize;
-            pears = new List<Pear>();
+            this.FileName = fileName;
+            this.FileSize = fileSize;
+            this.Peers = new List<Peer>();
         }
     }
 
-    public class Pear
+    public class Peer
     {
-        private string ip;
-        private int port;
+        public string Ip { get; set; }
+        public int Port { get; set; }
 
-        public string Ip { get { return ip; } set { ip = value; } }
-        public int Port { get { return port; } set { port = value; } }
-
-        public Pear(string ip, int port)
+        public Peer(string ip, int port)
         {
-            this.ip = ip;
-            this.port = port;
+            this.Ip = ip;
+            this.Port = port;
         }
     }
 }

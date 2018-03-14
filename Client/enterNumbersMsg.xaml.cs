@@ -1,102 +1,91 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Reflection;
+using System.Text;
+using System.Windows;
 
 namespace MiniTorrent
 {
     /// <summary>
     /// Interaction logic for enterNumbersMsg.xaml
     /// </summary>
-    public partial class enterNumbersMsg : Window
+    public partial class EnterNumbersMsg : Window
     {
-        public double x, y;
-        string dwLoc;
-        public enterNumbersMsg(string dwLoc)
+        public double num1, num2;
+        string downloadPath;
+
+        public EnterNumbersMsg(string downloadPath)
         {
             InitializeComponent();
-            this.dwLoc = dwLoc;
+            this.downloadPath = downloadPath;
         }
 
-        private void send_Click(object sender, RoutedEventArgs e)
+        private void Send_Click(object sender, RoutedEventArgs e)
         {
-            double x, y;
+            //double num1, num2;
             string res = "Please enter only numbers";
-            if (Double.TryParse(xText.Text, out x))
+
+            if (Double.TryParse(xText.Text, out num1) && Double.TryParse(yText.Text, out num2))
             {
-                if (Double.TryParse(yText.Text, out y))
-                {
-                    res = activateReflection(dwLoc, x, y);
-                    MessageBox.Show(res);
-                    this.Close();
-                    return;
-                }                    
-                else
-                    MessageBox.Show(res);
+                res = ActivateReflection();
+                MessageBox.Show(res);
+                this.Close();
+                return;
             }
             MessageBox.Show(res);
         }
 
-        public string activateReflection(string dwLoc, double x, double y)
+        public string ActivateReflection()
         {
-            StringBuilder sb = new StringBuilder();
-            Assembly a = null;
+            StringBuilder stringBuilder = new StringBuilder();
+            Assembly assembly = null;
 
             try
             {
-                a = Assembly.LoadFrom(dwLoc + "\\reflection.dll");
+                assembly = Assembly.LoadFrom(downloadPath + "\\reflection.dll");
 
-                if (a == null)
-                    return "Dll file not found";
+                if (assembly == null)
+                    return "reflection.dll file not found";
 
+                Type op = assembly.GetType("MiniTorrent.OpAttribute");
+                Type[] types = assembly.GetTypes();
 
-                Type op = a.GetType("MiniTorrent.OpAttribute");
-                Type[] types = a.GetTypes();
-                foreach (Type t in types)
+                foreach (Type type in types)
                 {
-                    object[] Attributes = t.GetCustomAttributes(false);
+                    object[] Attributes = type.GetCustomAttributes(false);
+
                     foreach (object obj in Attributes)
                     {
-                        Attribute Att = obj as Attribute;
-                        if (Att != null)
+                        if (obj is Attribute Att)
                         {
-                            Type t1 = Att.GetType();
-                            if (t1 == op)
+                            Type type1 = Att.GetType();
+                            if (type1 == op)
                             {
-                                PropertyInfo pi = t1.GetProperty("Op");
+                                PropertyInfo pi = type1.GetProperty("Op");
                                 char operatorSymbol = (char)pi.GetValue(Att, null);
-                                
+
                                 object[] ArgsArray = new object[2];
-                                ArgsArray[0] = x;
-                                ArgsArray[1] = y;
-                                    
-                                object action = Activator.CreateInstance(t, ArgsArray);
+                                ArgsArray[0] = num1;
+                                ArgsArray[1] = num2;
+
+                                object action = Activator.CreateInstance(type, ArgsArray);
                                 string s;
-                                MethodInfo[] mi = t.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly
-                                                                 |BindingFlags.Public);                                
+                                MethodInfo[] mi = type.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly
+                                                                 | BindingFlags.Public);
                                 s = (string)mi[0].Invoke(action, null);
-                                sb.Append(s + "\n");
+                                stringBuilder.Append(s + "\n");
                             }
                         }
                     }
                 }
             }
+
             catch (Exception err)
             {
                 MessageBox.Show(err.ToString());
                 return "Dll file not found";
             }
-            return sb.ToString();
+
+            return stringBuilder.ToString();
         }
     }
 }

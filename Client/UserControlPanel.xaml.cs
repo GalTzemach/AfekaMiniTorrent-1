@@ -257,7 +257,7 @@ namespace MiniTorrent
                 this.tfd = tfd;
                 this.fileName = tfd.FileName;
                 fileSize = tfd.FileSize;
-                numOfPears = tfd.PearsCount;
+                numOfPears = tfd.PeersCount;
                 this.downloadDataGrid = downloadDataGrid;
                 bytesPerPear = (int)fileSize / numOfPears;
                 stopWatch = new Stopwatch();
@@ -292,7 +292,7 @@ namespace MiniTorrent
                 
                 long bytesSpred = 0;
                 int count = 1;
-                foreach (Pear p in tfd.Pears)
+                foreach (Peer p in tfd.Peers)
                 {
                     if(count == numOfPears)
                     {
@@ -316,7 +316,7 @@ namespace MiniTorrent
                 finishTransfer();
             }
 
-            private async void connectToPear(Pear p, long fromByte, long toByte, int num)
+            private async void connectToPear(Peer p, long fromByte, long toByte, int num)
             {
                 long startPos = fromByte;
                 FileStatus fas = null;
@@ -451,7 +451,7 @@ namespace MiniTorrent
 
         private void reflection_Click(object sender, RoutedEventArgs e)
         {
-            enterNumbersMsg msg = new enterNumbersMsg(currentUser.DownloadPath);
+            EnterNumbersMsg msg = new EnterNumbersMsg(currentUser.DownloadPath);
             msg.ShowDialog();
         }
 
