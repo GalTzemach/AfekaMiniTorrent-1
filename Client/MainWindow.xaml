@@ -8,20 +8,19 @@
         Title="MainWindow" Height="350" Width="525">
     <Grid>
         <Label x:Name="label" Content="AviTorrent" HorizontalAlignment="Left" Margin="198,21,0,0" VerticalAlignment="Top" Height="41" Width="104" FontSize="18" FontWeight="Bold"/>
-        <Button x:Name="signIn" Content="Sign In" HorizontalAlignment="Left" Margin="235,213,0,0" VerticalAlignment="Top" Width="86" Height="40" Click="signIn_Click"/>
-        <Button x:Name="signUp" Content="Sign Up" HorizontalAlignment="Left" Margin="402,262,0,0" VerticalAlignment="Top" Width="86" Height="40" Click="signUp_Click"/>
+        <Button x:Name="signIn" Content="Sign In" HorizontalAlignment="Left" Margin="235,213,0,0" VerticalAlignment="Top" Width="86" Height="40" Click="SignIn_Click"/>
+        <Button x:Name="signUp" Content="Sign Up" HorizontalAlignment="Left" Margin="402,262,0,0" VerticalAlignment="Top" Width="86" Height="40" Click="SignUp_Click"/>
         <Label x:Name="label1" Content="UserName: " HorizontalAlignment="Left" Margin="110,75,0,0" VerticalAlignment="Top" FontFamily="Comic Sans MS" FontSize="14"/>
         <Label x:Name="label2" Content="Password: " HorizontalAlignment="Left" Margin="125,107,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="user" HorizontalAlignment="Left" Height="23" Margin="220,78,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="220"/>
-        <TextBox x:Name="pass" HorizontalAlignment="Left" Height="23" Margin="220,108,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="220"/>
+        <TextBox x:Name="userName" HorizontalAlignment="Left" Height="23" Margin="220,78,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="220"/>
+        <TextBox x:Name="password" HorizontalAlignment="Left" Height="23" Margin="220,108,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="220"/>
         <Label x:Name="label3" Content="Upload Location:" HorizontalAlignment="Left" Margin="83,138,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="upLoc" HorizontalAlignment="Left" Height="23" Margin="220,139,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="194"/>
+        <TextBox x:Name="uploadPath" HorizontalAlignment="Left" Height="23" Margin="220,139,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="194"/>
         <Label x:Name="label3_Copy" Content="Download Location:" HorizontalAlignment="Left" Margin="67,169,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="downLoc" HorizontalAlignment="Left" Height="23" Margin="220,171,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="194"/>
+        <TextBox x:Name="downloadPath" HorizontalAlignment="Left" Height="23" Margin="220,171,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="194"/>
         <Label x:Name="label4" Content="Don't have AviTorrent's account, Press Sign Up now!!!" HorizontalAlignment="Left" Margin="31,269,0,0" VerticalAlignment="Top"/>
         <Label x:Name="errorLabel" Content="Username or password areincorrect" HorizontalAlignment="Left" Margin="37,250,0,0" VerticalAlignment="Top" Foreground="#FFD10E0E" Visibility="Hidden" FontWeight="Bold"/>
-        <Button x:Name="upLocBut" Content="..." HorizontalAlignment="Left" Margin="417,139,0,0" VerticalAlignment="Top" Width="23" Height="23" Click="upLocBut_Click"/>
-        <Button x:Name="dwLocBut" Content="..." HorizontalAlignment="Left" Margin="417,171,0,0" VerticalAlignment="Top" Width="23" Height="23" Click="dwLocBut_Click" />
-
+        <Button x:Name="upLocBut" Content="..." HorizontalAlignment="Left" Margin="417,139,0,0" VerticalAlignment="Top" Width="23" Height="23" Click="UploadPath_Click"/>
+        <Button x:Name="dwLocBut" Content="..." HorizontalAlignment="Left" Margin="417,171,0,0" VerticalAlignment="Top" Width="23" Height="23" Click="DownloadPath_Click" />
     </Grid>
 </Window>

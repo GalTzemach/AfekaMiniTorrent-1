@@ -27,19 +27,19 @@ namespace MiniTorrent
     public partial class UserControlPanel : Window
     {
         private NetworkStream ns;
-        private static List<FilesAndStatus> uploadFiles;
-        private static List<FilesAndStatus> downloadFiles;
-        private static Users currentUser;
+        private static List<FileStatus> uploadFiles;
+        private static List<FileStatus> downloadFiles;
+        private static User currentUser;
         private delegate void myDelegate();
         private static BackgroundWorker bw;
         private static BackgroundWorker bwReflactionButton;
         private static object _lock = new object();
         private static bool activeFlag;
 
-        public UserControlPanel(NetworkStream ns, List<FilesAndStatus> uploadFiles, Users currentUser)
+        public UserControlPanel(NetworkStream ns, List<FileStatus> uploadFiles, User currentUser)
         {
             InitializeComponent();
-            downloadFiles = new List<FilesAndStatus>();
+            downloadFiles = new List<FileStatus>();
             bw = new BackgroundWorker();
             bwReflactionButton = new BackgroundWorker();
             activeFlag = true;
@@ -61,7 +61,7 @@ namespace MiniTorrent
             if(sad.getTfdForTransfer() != null)
             {
                 TransferFileDetails tfd = sad.getTfdForTransfer();
-                downloadFiles.Add(new FilesAndStatus(tfd.FileName, tfd.FileSize, "Downloading"));
+                downloadFiles.Add(new FileStatus(tfd.FileName, tfd.FileSize, "Downloading"));
 
                 updateDataGrid();
                 
@@ -98,7 +98,7 @@ namespace MiniTorrent
         //check if there is a reflaction dll
         public void checkForReflactionFile()
         {
-            if (File.Exists(currentUser.DownLoc + "\\reflection.dll"))
+            if (File.Exists(currentUser.DownloadPath + "\\reflection.dll"))
             {
                 while (bwReflactionButton.IsBusy) ;
                 bwReflactionButton.RunWorkerAsync();
@@ -168,9 +168,9 @@ namespace MiniTorrent
             private async void startSendFile(ClientUploadDownload cup, NetworkStream ns)
             {
                 FileStream fileStream = null;
-                FilesAndStatus fas = null;
+                FileStatus fas = null;
 
-                foreach (FilesAndStatus tempFas in uploadFiles)
+                foreach (FileStatus tempFas in uploadFiles)
                 {
                     if (tempFas.FileName.Equals(cup.FileName))
                         fas = tempFas;
@@ -178,7 +178,7 @@ namespace MiniTorrent
 
                 try
                 { 
-                    string path = currentUser.UpLoc + "\\" + cup.FileName;
+                    string path = currentUser.UploadPath + "\\" + cup.FileName;
                     FileInfo file = new FileInfo(path);
                     fileStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read);
                     
@@ -202,7 +202,7 @@ namespace MiniTorrent
                         ToatlSent += len;                        
 
                             double pctread = ((double)ToatlSent / total) * 100;
-                            fas.PbValue = Convert.ToInt32(pctread);
+                            fas.PercentCompleted = Convert.ToInt32(pctread);
                             fas.Status = "Uploading";
 
                             while (bw.IsBusy) ;
@@ -270,7 +270,7 @@ namespace MiniTorrent
             { 
                 try
                 {
-                    path = currentUser.DownLoc + "\\" + fileName;
+                    path = currentUser.DownloadPath + "\\" + fileName;
                     fi = new FileInfo(path);
                     fileStream = new FileStream(fi.FullName, FileMode.Create, FileAccess.Write);
                 }
@@ -319,9 +319,9 @@ namespace MiniTorrent
             private async void connectToPear(Pear p, long fromByte, long toByte, int num)
             {
                 long startPos = fromByte;
-                FilesAndStatus fas = null;
+                FileStatus fas = null;
 
-                foreach (FilesAndStatus tempFas in downloadFiles)
+                foreach (FileStatus tempFas in downloadFiles)
                 {
                     if (tempFas.FileName.Equals(fileName))
                         fas = tempFas;
@@ -351,7 +351,7 @@ namespace MiniTorrent
                         lock (_lock)
                         {                                    
                             double pctread = ((double)downloaded / tfd.FileSize) * 100;
-                            fas.PbValue = Convert.ToInt32(pctread);                                    
+                            fas.PercentCompleted = Convert.ToInt32(pctread);                                    
                             while (bw.IsBusy) ;
                             bw.RunWorkerAsync();
                         } 
@@ -387,9 +387,9 @@ namespace MiniTorrent
 
             private void finishTransfer()
             {
-                FilesAndStatus fas = null;
+                FileStatus fas = null;
 
-                foreach (FilesAndStatus tempFas in downloadFiles)
+                foreach (FileStatus tempFas in downloadFiles)
                 {
                     if (tempFas.FileName.Equals(fileName))
                         fas = tempFas;
@@ -397,7 +397,7 @@ namespace MiniTorrent
 
                 if (!vaildFlag)
                 {
-                    fas.PbValue = 0;
+                    fas.PercentCompleted = 0;
                     fas.Status = "Error";
                     MessageBox.Show("There was a problem with " + fileName + "transfer");                    
                 }
@@ -411,7 +411,7 @@ namespace MiniTorrent
                         ts.Hours, ts.Minutes, ts.Seconds);
                     fas.BitRate = fas.FileSize / ts.Milliseconds;
                     fas.Status = "Completed";
-                    fas.TotalTransferTime = elapsedTime;
+                    fas.TotaTime = elapsedTime;
                     fileStream.Close();
 
                     if (fileName.Trim().Equals("reflection.dll"))
@@ -451,7 +451,7 @@ namespace MiniTorrent
 
         private void reflection_Click(object sender, RoutedEventArgs e)
         {
-            enterNumbersMsg msg = new enterNumbersMsg(currentUser.DownLoc);
+            enterNumbersMsg msg = new enterNumbersMsg(currentUser.DownloadPath);
             msg.ShowDialog();
         }
 

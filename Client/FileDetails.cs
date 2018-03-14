@@ -1,23 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MiniTorrent
 {
     public class FileDetails : IEquatable<FileDetails>
     {
-        private string fileName;
-        private long fileSize;
-
-        public string FileName { get { return fileName; } set { fileName = value; } }
-        public long FileSize { get { return fileSize; } set { fileSize = value; } }
+        public string FileName { get; set; }
+        public long FileSize { get; set; }
 
         public FileDetails(string fileName, long fileSize)
         {
-            this.fileName = fileName;
-            this.fileSize = fileSize;
+            this.FileName = fileName;
+            this.FileSize = fileSize;
         }
 
         public bool Equals(FileDetails other)

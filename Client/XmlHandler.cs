@@ -1,195 +1,202 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 using System.IO;
+using System.Xml;
 
 namespace MiniTorrent
 {
-    class XmlHandler
+    public class XmlHandler
     {
-        private static string fName = "MyConfig.xml";
-        private XmlNodeType type;
-        XmlTextReader reader;
+        private string fileName;
+        private XmlNodeType xmlType;
+        private XmlTextReader xmlReader;
 
-        public Users[] readXmlFileAndCreateUser()
+        public XmlHandler(string fileName)
+        {
+            this.fileName = fileName;
+        }
+
+        public User[] ReadUserFromXml()
         {
             string userName = "";
             string password = "";
-            string upload = "";
-            string download = "";
+            string uploadPath = "";
+            string downloadPath = "";
             string ip = "";
             int upPort = 0;
             int downPort = 0;
             string fileName = "";
             long fileSize = 0;
-            Users[] users = new Users[2];
-            
-            reader = new XmlTextReader(fName);
+            User[] users = new User[2];
 
-            while (reader.Read())
+            this.xmlReader = new XmlTextReader(this.fileName);
+
+            while (xmlReader.Read())
             {
-                type = reader.NodeType;
-                if (type == XmlNodeType.Element)
+                xmlType = xmlReader.NodeType;
+
+                if (xmlType == XmlNodeType.Element)
                 {
-                    switch (reader.Name)
+                    switch (xmlReader.Name)
                     {
                         case "username":
-                            reader.Read();
-                            userName = reader.Value;
-                            if (userName.Trim().Equals(""))
+                            xmlReader.Read();
+                            userName = xmlReader.Value;
+                            if (string.IsNullOrEmpty(userName.Trim()))
                             {
-                                reader.Close();
+                                xmlReader.Close();
                                 return null;
                             }
                             break;
 
                         case "password":
-                            reader.Read();
-                            password = reader.Value;
-                            if (password.Trim().Equals(""))
+                            xmlReader.Read();
+                            password = xmlReader.Value;
+                            if (string.IsNullOrEmpty(password.Trim()))
                             {
-                                reader.Close();
+                                xmlReader.Close();
                                 return null;
                             }
                             break;
 
-                        case "upload":
-                            reader.Read();
-                            upload = reader.Value;
-                            if (upload.Trim().Equals("") || !Directory.Exists(upload))
+                        case "uploadPath":
+                            xmlReader.Read();
+                            uploadPath = xmlReader.Value;
+                            if (string.IsNullOrEmpty(uploadPath.Trim()) || !Directory.Exists(uploadPath))
                             {
-                                reader.Close();
+                                xmlReader.Close();
                                 return null;
                             }
                             break;
 
-                        case "download":
-                            reader.Read();
-                            download = reader.Value;
-                            if (download.Trim().Equals("") || !Directory.Exists(download))
+                        case "downloadPath":
+                            xmlReader.Read();
+                            downloadPath = xmlReader.Value;
+                            if (string.IsNullOrEmpty(downloadPath.Trim()) || !Directory.Exists(downloadPath))
                             {
-                                reader.Close();
+                                xmlReader.Close();
                                 return null;
                             }
                             break;
 
                         case "ip":
-                            reader.Read();
-                            ip = reader.Value;
-                            if (ip.Trim().Equals(""))
+                            xmlReader.Read();
+                            ip = xmlReader.Value;
+                            if (string.IsNullOrEmpty(ip.Trim()))
                             {
-                                reader.Close();
+                                xmlReader.Close();
                                 return null;
                             }
                             break;
 
                         case "upPort":
-                            reader.Read();
-                            upPort = Convert.ToInt32(reader.Value);
+                            xmlReader.Read();
+                            upPort = Convert.ToInt32(xmlReader.Value);
                             if (upPort == 0)
                             {
-                                reader.Close();
+                                xmlReader.Close();
                                 return null;
                             }
                             break;
 
                         case "downPort":
-                            reader.Read();
-                            downPort = Convert.ToInt32(reader.Value);
+                            xmlReader.Read();
+                            downPort = Convert.ToInt32(xmlReader.Value);
                             if (downPort == 0)
                             {
-                                reader.Close();
+                                xmlReader.Close();
                                 return null;
                             }
-                            users[0] = new Users(userName, password, upload, download, ip, upPort, downPort);
-                            users[1] = new Users(userName, password, ip, upPort, downPort);
+
+                            users[0] = new User(userName, password, uploadPath, downloadPath, ip, upPort, downPort);
+                            users[1] = new User(userName, password, ip, upPort, downPort);
                             break;
 
                         case "FileName":
-                            reader.Read();
-                            fileName = reader.Value;
+                            xmlReader.Read();
+                            fileName = xmlReader.Value;
                             break;
 
                         case "FileSize":
-                            reader.Read();
-                            if(File.Exists(upload + "\\" + fileName))
+                            xmlReader.Read();
+                            if (File.Exists(uploadPath + "\\" + fileName))
                             {
-                                fileSize = Convert.ToInt64(reader.Value);
+                                fileSize = Convert.ToInt64(xmlReader.Value);
                                 users[0].FileList.Add(new FileDetails(fileName, fileSize));
                                 users[1].FileList.Add(new FileDetails(fileName, fileSize));
-                            }                            
+                            }
                             break;
                     }
                 }
             }
-            reader.Close();
+            xmlReader.Close();
             return users;
         }
 
-        public void rebuildXml(Users currentUser, Dictionary<string, long> dic)
+        public void WriteUserToXml(User currentUser, Dictionary<string, long> files)
         {
-            string userName = currentUser.UserName;
-            string password = currentUser.Password;
-            string upload = currentUser.UpLoc;
-            string download = currentUser.DownLoc;
+            XmlWriterSettings xmlSettings = new XmlWriterSettings
+            {
+                Indent = true,
+                IndentChars = "\t"
+            };
 
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.Indent = true;
-            settings.IndentChars = "\t";
-            XmlWriter writer = XmlWriter.Create(fName, settings);
+            XmlWriter xmlWriter = XmlWriter.Create(fileName, xmlSettings);
 
-            writer.WriteStartDocument();
-            writer.WriteStartElement("User");
+            xmlWriter.WriteStartDocument();
 
-            writer.WriteStartElement("username");
-            writer.WriteString(userName);
-            writer.WriteEndElement(); //username
+            xmlWriter.WriteStartElement("User");
 
-            writer.WriteStartElement("password");
-            writer.WriteString(password);
-            writer.WriteEndElement(); //password
+            xmlWriter.WriteStartElement("username");
+            xmlWriter.WriteString(currentUser.UserName);
+            xmlWriter.WriteEndElement();
 
-            writer.WriteStartElement("upload");
-            writer.WriteString(upload);
-            writer.WriteEndElement(); //upload
+            xmlWriter.WriteStartElement("password");
+            xmlWriter.WriteString(currentUser.Password);
+            xmlWriter.WriteEndElement();
 
-            writer.WriteStartElement("download");
-            writer.WriteString(download);
-            writer.WriteEndElement(); //download
+            xmlWriter.WriteStartElement("uploadPath");
+            xmlWriter.WriteString(currentUser.UploadPath);
+            xmlWriter.WriteEndElement();
 
-            writer.WriteStartElement("ip");
-            writer.WriteString(currentUser.Ip);
-            writer.WriteEndElement(); //ip
+            xmlWriter.WriteStartElement("downloadPath");
+            xmlWriter.WriteString(currentUser.DownloadPath);
+            xmlWriter.WriteEndElement();
 
-            writer.WriteStartElement("upPort");
-            writer.WriteString(currentUser.UpPort.ToString());
-            writer.WriteEndElement(); //upPort
+            xmlWriter.WriteStartElement("ip");
+            xmlWriter.WriteString(currentUser.Ip);
+            xmlWriter.WriteEndElement();
 
-            writer.WriteStartElement("downPort");
-            writer.WriteString(currentUser.DownPort.ToString());
-            writer.WriteEndElement(); //downPort
+            xmlWriter.WriteStartElement("upPort");
+            xmlWriter.WriteString(currentUser.UpPort.ToString());
+            xmlWriter.WriteEndElement();
 
-            addFileListToXml(writer, dic);
-            writer.WriteEndElement(); //User
-            writer.WriteEndDocument();
-            writer.Close();
+            xmlWriter.WriteStartElement("downPort");
+            xmlWriter.WriteString(currentUser.DownPort.ToString());
+            xmlWriter.WriteEndElement();
+
+            AddUserFilesToXml(xmlWriter, files);
+
+            xmlWriter.WriteEndElement(); //User
+
+            xmlWriter.WriteEndDocument();
+            xmlWriter.Close();
         }
 
-        public void addFileListToXml(XmlWriter writer, Dictionary<string, long> files)
+        public void AddUserFilesToXml(XmlWriter writer, Dictionary<string, long> files)
         {
-            foreach (string key in files.Keys)
+            foreach (string fileName in files.Keys)
             {
                 writer.WriteStartElement("File");
+
                 writer.WriteStartElement("FileName");
-                writer.WriteString(key);
-                writer.WriteEndElement(); //FileName
+                writer.WriteString(fileName);
+                writer.WriteEndElement();
 
                 writer.WriteStartElement("FileSize");
-                writer.WriteString(files[key].ToString());
-                writer.WriteEndElement(); //FileSize
+                writer.WriteString(files[fileName].ToString());
+                writer.WriteEndElement();
+
                 writer.WriteEndElement(); //File
             }
         }

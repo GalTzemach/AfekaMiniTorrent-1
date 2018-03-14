@@ -3,21 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Xml;
 
 namespace MiniTorrent
@@ -27,89 +16,102 @@ namespace MiniTorrent
     /// </summary>
     public partial class MainWindow : Window
     {
-        //error massegeges 
-        private string emptyFieldsError = "All the fields have to be filled";
-        private string noUserError = "Username or password are incorrect";
-        private string wrongPathError = "the upload/download path is incorrect";
-        private string userAlredySigned = "The username is alredy signed in";
-        private string userBlocked = "The username is blocked";
-        private string confInCorrect = "The ConfigFile is incorrect or not exist";
-        //error massegeges 
+        // Error massegeges.
+        private string emptyFields = "All the fields have to be filled";
+        private string userNotExist = "Username or password are incorrect";
+        private string incorrectPath = "the upload/download path is incorrect";
+        private string userAlreadyConnected = "The username is alredy signed in";
+        private string userDisable = "The username is blocked";
+        private string IncorrectConfigFile = "The ConfigFile is incorrect or not exist";
 
-        private string fName = "MyConfig.xml";  //config file name
-        private string serverIp = "192.168.1.156";//server Ip
-        private int upPort = 8005;
-        private int serverPort = 8006;
-        private List<FilesAndStatus> uploadFiles;
-        private XmlHandler xmlHandler = new XmlHandler();
-        private Users currentUser;
-        private bool startOver = false;
+        private const string SERVER_IP = "192.168.1.156";
+        private const string CONFIG_FILE_NAME = "MyConfig.xml";
+        private const int UP_PORT = 8005;
+        private const int SERVER_PORT = 8006;
+
+        private List<FileStatus> uploadFiles;
+        private XmlHandler xmlHandler;
+        private User currentUser;
+        private bool startOver;
 
         public MainWindow()
         {
+            xmlHandler = new XmlHandler(CONFIG_FILE_NAME);
+            startOver = false;
+
             InitializeComponent();
             Hide();
-            if (File.Exists(fName)) //if there is a config file and its ok, no need for re-login
-                buildJsonFileAndSend();
+
+            if (File.Exists(CONFIG_FILE_NAME))
+            {
+                // Config file exist, no re-login required.
+                SendUserAsJsonToServer();
+            }
+
             else
             {
                 startOver = true;
                 Show();
             }
-                
+
         }
 
-        private void signUp_Click(object sender, RoutedEventArgs e)
+        private void SignUp_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start("http://localhost:63525/HomePage.aspx"); //signup web
+            // Opens a new user registration page on the web portal.
+            Process.Start("http://localhost:62053/CreateNewUser.aspx");
         }
 
-        private void signIn_Click(object sender, RoutedEventArgs e)
+        private void SignIn_Click(object sender, RoutedEventArgs e)
         {
-            if(checkedFields())
+            if (CheckFields())
             {
-                buildXmlFile();
-                buildJsonFileAndSend();
-            }            
+                BuildXmlFile();
+                SendUserAsJsonToServer();
+            }
         }
 
-        //check sign in fields
-        public bool checkedFields() 
+        public bool CheckFields()
         {
-            //field are filled
-            if(user.Text.Trim() == "" || pass.Text.Trim() == "" || upLoc.Text.Trim() == "" 
-                || downLoc.Text.Trim() == "")
+            // Ckeck empty fields.
+            if (string.IsNullOrEmpty(userName.Text.Trim()) ||
+                string.IsNullOrEmpty(password.Text.Trim()) ||
+                string.IsNullOrEmpty(uploadPath.Text.Trim()) ||
+                string.IsNullOrEmpty(downloadPath.Text.Trim()))
             {
-                errorLabel.Content = emptyFieldsError; 
+                errorLabel.Content = emptyFields;
                 errorLabel.Visibility = Visibility.Visible;
                 return false;
             }
 
-            else if(!Directory.Exists(upLoc.Text.Trim()) || !Directory.Exists(downLoc.Text.Trim()))
+            // Check if directories are exist.
+            if (!Directory.Exists(uploadPath.Text.Trim()) ||
+                     !Directory.Exists(downloadPath.Text.Trim()))
             {
-                errorLabel.Content = wrongPathError;
+                errorLabel.Content = incorrectPath;
                 errorLabel.Visibility = Visibility.Visible;
                 return false;
             }
 
-            else
-            {
-                errorLabel.Visibility = Visibility.Hidden;
-                return true;
-            }
+            // Everything is fine
+            errorLabel.Visibility = Visibility.Hidden;
+            return true;
         }
 
-        public void buildXmlFile()
-        {            
-            string userName = user.Text.Trim();
-            string password = pass.Text.Trim();
-            string upload = upLoc.Text.Trim();
-            string download = downLoc.Text.Trim();
+        public void BuildXmlFile()
+        {
+            string userName = this.userName.Text.Trim();
+            string password = this.password.Text.Trim();
+            string upload = uploadPath.Text.Trim();
+            string download = downloadPath.Text.Trim();
 
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.Indent = true;
-            settings.IndentChars = "\t";
-            XmlWriter writer = XmlWriter.Create(fName, settings);
+            XmlWriterSettings settings = new XmlWriterSettings
+            {
+                Indent = true,
+                IndentChars = "\t"
+            };
+
+            XmlWriter writer = XmlWriter.Create(CONFIG_FILE_NAME, settings);
 
             writer.WriteStartDocument();
             writer.WriteStartElement("User");
@@ -131,178 +133,26 @@ namespace MiniTorrent
             writer.WriteEndElement(); //download
 
             writer.WriteStartElement("ip");
-            writer.WriteString(GetLocalIPAddress());
+            writer.WriteString(GetCorrectIPAddress());
             writer.WriteEndElement(); //ip
 
             writer.WriteStartElement("upPort");
-            writer.WriteString(upPort.ToString());
+            writer.WriteString(UP_PORT.ToString());
             writer.WriteEndElement(); //upPort
 
             writer.WriteStartElement("downPort");
-            writer.WriteString(serverPort.ToString());
+            writer.WriteString(SERVER_PORT.ToString());
             writer.WriteEndElement(); //downPort
 
-            addFileListToXml(writer);
+            AddUserFilesToXml(writer);
             writer.WriteEndElement(); //User
             writer.WriteEndDocument();
             writer.Close();
         }
 
-        public async void buildJsonFileAndSend() //json file for user login
+        public void AddUserFilesToXml(XmlWriter writer)
         {
-            try
-            {
-                Users[] users = new Users[2];
-                users = xmlHandler.readXmlFileAndCreateUser();
-
-                if(users != null)
-                {
-                    if (!startOver)
-                        updateFileList(users);
-
-                    currentUser = users[0];
-
-                    TcpClient client = new TcpClient();
-
-                    await client.ConnectAsync(serverIp, serverPort);
-                    NetworkStream ns = client.GetStream();
-
-                    string jasonStriing = JsonConvert.SerializeObject(users[1]);
-
-                    byte[] jsonFile = ASCIIEncoding.ASCII.GetBytes(jasonStriing);
-                    byte[] jsonFileLength = BitConverter.GetBytes(jsonFile.Length);
-
-                    await ns.WriteAsync(jsonFileLength, 0, jsonFileLength.Length);
-                    await ns.WriteAsync(jsonFile, 0, jsonFile.Length);
-
-                    serverResponse(ns, currentUser);
-                }
-                else
-                {
-                    errorLabel.Content = confInCorrect;
-                    errorLabel.Visibility = Visibility.Visible;
-                    startOver = true;
-                    this.Show();
-                }
-                                
-            }
-            catch (Exception e)
-            {
-                MessageBoxResult result = MessageBox.Show("Server Offline");
-                this.Close();
-            }
-        }
-
-        //if its login with config file, check for file changes in locations
-        public void updateFileList(Users [] users) 
-        {
-            Dictionary<string, long> dic = getAllFiles(users[0].UpLoc);
-            users[0].FileList.Clear();
-            users[1].FileList.Clear();
-
-            foreach (String key in dic.Keys)
-            {
-                FileDetails tempFile = new FileDetails(key, dic[key]);
-                users[0].FileList.Add(tempFile);
-                users[1].FileList.Add(tempFile);
-            }
-
-            xmlHandler.rebuildXml(users[0], dic);
-        }
-
-        //pc can have multiply ip addresses
-        public string GetLocalIPAddress() 
-        {
-            List<string> ipAdress = new List<string>();
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                    ipAdress.Add(ip.ToString());                
-            }
-
-            if (ipAdress.Count == 1)
-                return ipAdress[0];
-            else
-            {
-                IpMsgBox msg = new IpMsgBox(ipAdress);
-                msg.ShowDialog();
-                return msg.chosenIp;
-            }            
-        }
-
-        //server response to login request
-        public async void serverResponse(NetworkStream ns, Users currentUser) 
-        {
-            byte[] answer = new byte[1];
-            await ns.ReadAsync(answer, 0, 1);            
-
-            if (answer[0] == 0) //wrong username or password
-            {
-                errorLabel.Content = noUserError;
-                errorLabel.Visibility = Visibility.Visible;
-                startOver = true;
-                this.Show();
-            }
-
-            else if (answer[0] == 1)// all ok
-            {
-                //open app
-                if (uploadFiles == null)
-                    getAllFiles(currentUser.UpLoc.Trim());
-                UserControlPanel cp = new UserControlPanel(ns, uploadFiles, currentUser);
-                cp.Show();
-                this.Close();
-                errorLabel.Visibility = Visibility.Hidden;
-            }
-
-            else if (answer[0] == 2)// all ok
-            {
-                errorLabel.Content = userAlredySigned;
-                errorLabel.Visibility = Visibility.Visible;
-                startOver = true;
-                this.Show();
-            }
-            else
-            {
-                errorLabel.Content = userBlocked;
-                errorLabel.Visibility = Visibility.Visible;
-                startOver = true;
-                this.Show();
-            }
-        }
-
-        public Dictionary<string, long> getAllFiles(string path)
-        {
-            Dictionary<string, long> dic = new Dictionary<string, long>();
-            uploadFiles = new List<FilesAndStatus>();
-
-            foreach (string file in Directory.GetFiles(path))
-            {
-                string fileName = System.IO.Path.GetFileName(file);
-                FileInfo f = new FileInfo(file);
-                long fileSize = f.Length;
-                dic[fileName] = fileSize;
-                uploadFiles.Add(new FilesAndStatus(fileName, fileSize, "Standby"));
-            }
-
-            foreach (string dir in Directory.GetDirectories(path))
-            {                
-                foreach(string file in Directory.GetFiles(dir))
-                {
-                    string fileName = System.IO.Path.GetFileName(file);
-                    FileInfo f = new FileInfo(file);
-                    long fileSize = f.Length;
-                    dic[fileName] = fileSize;
-                    uploadFiles.Add(new FilesAndStatus(fileName, fileSize, "Standby"));
-                }                
-            }
-            return dic;
-        }
-
-        public void addFileListToXml(XmlWriter writer)
-        {
-            Dictionary<string, long> files = getAllFiles(upLoc.Text.Trim());
+            Dictionary<string, long> files = GetAllFiles(uploadPath.Text.Trim());
 
             foreach (string key in files.Keys)
             {
@@ -318,21 +168,189 @@ namespace MiniTorrent
             }
         }
 
-        private void upLocBut_Click(object sender, RoutedEventArgs e)
+        private Dictionary<string, long> GetAllFiles(string path)
         {
-            using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
+            Dictionary<string, long> files = new Dictionary<string, long>();
+            uploadFiles = new List<FileStatus>();
+
+            foreach (string file in Directory.GetFiles(path))
             {
-                dialog.ShowDialog();
-                upLoc.Text = dialog.SelectedPath;
+                AddFileToUploadFiles(file, files);
+            }
+
+            foreach (string dir in Directory.GetDirectories(path))
+            {
+                foreach (string file in Directory.GetFiles(dir))
+                {
+                    AddFileToUploadFiles(file, files);
+                }
+            }
+
+            return files;
+        }
+
+        private void AddFileToUploadFiles(string file, Dictionary<string, long> files)
+        {
+            string fileName;
+            long fileSize;
+            FileInfo fileInfo;
+
+            fileName = Path.GetFileName(file);
+            fileInfo = new FileInfo(file);
+            fileSize = fileInfo.Length; // In bytes.
+            files[fileName] = fileSize;
+            uploadFiles.Add(new FileStatus(fileName, fileSize, "Standby"));
+        }
+
+        // Send for user Login.
+        public async void SendUserAsJsonToServer()
+        {
+            try
+            {
+                User[] users = new User[2];
+                users = xmlHandler.ReadUserFromXml();
+
+                if (users != null)
+                {
+                    if (!startOver)
+                    {
+                        UpdateFileList(users);
+                    }
+
+                    currentUser = users[0];
+
+                    TcpClient client = new TcpClient();
+
+                    // Connecting to server.
+                    await client.ConnectAsync(SERVER_IP, SERVER_PORT);
+                    NetworkStream stream = client.GetStream();
+
+                    // Convert user object to json before send.
+                    string jsonString = JsonConvert.SerializeObject(users[1]);
+
+                    byte[] jsonByte = ASCIIEncoding.ASCII.GetBytes(jsonString);
+                    byte[] jsonSize = BitConverter.GetBytes(jsonByte.Length);
+
+                    // Write size.
+                    await stream.WriteAsync(jsonSize, 0, jsonSize.Length);
+
+                    // Write user As json.
+                    await stream.WriteAsync(jsonByte, 0, jsonByte.Length);
+
+                    ServerResponse(stream, currentUser);
+                }
+                else
+                {
+                    ShowErrorLabel(IncorrectConfigFile);
+                }
+            }
+            catch (Exception)
+            {
+                MessageBoxResult result = MessageBox.Show("Unable to connect to server");
+                this.Close();
             }
         }
 
-        private void dwLocBut_Click(object sender, RoutedEventArgs e)
+        // When Login with config file, check for file changes in specific path.
+        private void UpdateFileList(User[] users)
         {
-            using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
+            Dictionary<string, long> files = GetAllFiles(users[0].UploadPath);
+            users[0].FileList.Clear();
+            users[1].FileList.Clear();
+
+            foreach (String file in files.Keys)
             {
-                dialog.ShowDialog();
-                downLoc.Text = dialog.SelectedPath;
+                FileDetails tempFile = new FileDetails(file, files[file]);
+                users[0].FileList.Add(tempFile);
+                users[1].FileList.Add(tempFile);
+            }
+
+            xmlHandler.WriteUserToXml(users[0], files);
+        }
+
+        // Handle server response to Login request.
+        public async void ServerResponse(NetworkStream stream, User currentUser)
+        {
+            byte[] answer = new byte[1];
+
+            // Read answer from server.
+            await stream.ReadAsync(answer, 0, 1);
+            // 0 = User not exist.
+            // 1 = Connecting the user.
+            // 2 = User alredy connected.
+            // 3 = User Disable.
+
+            switch (answer[0])
+            {
+                case 0:
+                    ShowErrorLabel(userNotExist);
+                    break;
+                case 1:
+                    if (uploadFiles == null)
+                        GetAllFiles(currentUser.UploadPath.Trim());
+
+                    UserControlPanel userControlPanel = new UserControlPanel(stream, uploadFiles, currentUser);
+                    userControlPanel.Show();
+
+                    errorLabel.Visibility = Visibility.Hidden;
+                    this.Close();
+                    break;
+                case 2:
+                    ShowErrorLabel(userAlreadyConnected);
+                    break;
+                case 3:
+                    ShowErrorLabel(userDisable);
+                    break;
+            }
+        }
+
+        private void ShowErrorLabel(string theError)
+        {
+            errorLabel.Content = theError;
+            errorLabel.Visibility = Visibility.Visible;
+            startOver = true;
+            this.Show();
+        }
+
+        // Because pc can have multiply ip addresses.
+        public string GetCorrectIPAddress()
+        {
+            List<string> IPList = new List<string>();
+
+            var hosts = Dns.GetHostEntry(Dns.GetHostName());
+
+            foreach (var ip in hosts.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    IPList.Add(ip.ToString());
+            }
+
+            if (IPList.Count == 1)
+                return IPList[0];
+
+            else
+            {
+                ChooseIPAddress chooseIP = new ChooseIPAddress(IPList);
+                chooseIP.ShowDialog();
+                return chooseIP.selectedIP;
+            }
+        }
+
+        private void UploadPath_Click(object sender, RoutedEventArgs e)
+        {
+            using (var uploadFolderDialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                uploadFolderDialog.ShowDialog();
+                uploadPath.Text = uploadFolderDialog.SelectedPath;
+            }
+        }
+
+        private void DownloadPath_Click(object sender, RoutedEventArgs e)
+        {
+            using (var downloadFolderDialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                downloadFolderDialog.ShowDialog();
+                downloadPath.Text = downloadFolderDialog.SelectedPath;
             }
         }
     }

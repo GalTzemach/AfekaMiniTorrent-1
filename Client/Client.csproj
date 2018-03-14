@@ -75,7 +75,6 @@
     <Compile Include="IpMsgBox.xaml.cs">
       <DependentUpon>IpMsgBox.xaml</DependentUpon>
     </Compile>
-    <Compile Include="SignInUp.xaml.cs" />
     <Compile Include="TransferFileDetails.cs" />
     <Compile Include="SearchAndDownload.xaml.cs">
       <DependentUpon>SearchAndDownload.xaml</DependentUpon>
@@ -83,8 +82,7 @@
     <Compile Include="UserControlPanel.xaml.cs">
       <DependentUpon>UserControlPanel.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Users.cs" />
-    <Compile Include="UserWindow.xaml.cs" />
+    <Compile Include="User.cs" />
     <Compile Include="XmlHandler.cs" />
     <Page Include="enterNumbersMsg.xaml">
       <SubType>Designer</SubType>
@@ -110,17 +108,9 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="SignInUp.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="UserControlPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UserWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>

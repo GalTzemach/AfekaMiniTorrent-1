@@ -43,6 +43,5 @@
         </DataGrid>
         <Button x:Name="reflection" Content="Reflection" HorizontalAlignment="Left" Margin="38,616,0,0" VerticalAlignment="Top" Width="86" HorizontalContentAlignment="Center" Height="36" Click="reflection_Click" Visibility="Hidden" />
         <Button x:Name="button1" Content="Log Out" HorizontalAlignment="Left" Margin="321,623,0,0" VerticalAlignment="Top" Width="81" Height="29" Click="button1_Click"/>
-
     </Grid>
 </Window>

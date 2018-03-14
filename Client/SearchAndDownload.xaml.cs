@@ -26,10 +26,10 @@ namespace MiniTorrent
         private string fileNotFound = "File not found";
         private List<TransferFileDetails> tfd;
         private TransferFileDetails tfdForTransfer;
-        private Users currentUser;
+        private User currentUser;
         private NetworkStream ns;
 
-        public SearchAndDownload(NetworkStream ns, Users user)
+        public SearchAndDownload(NetworkStream ns, User user)
         {
             InitializeComponent();
             this.ns = ns;
