@@ -6,7 +6,7 @@ namespace MiniTorrent
     {
         public string FileName { get; set; }
         public long FileSize { get; set; }
-        public int PeersCount { get; set; }
+        public int NumOfPeers { get; set; }
         public List<Peer> Peers { get; set; }
 
         public TransferFileDetails(string fileName, long fileSize)

@@ -1,19 +1,10 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace MiniTorrent
 {
@@ -21,103 +12,110 @@ namespace MiniTorrent
     /// Interaction logic for SearchAndDownload.xaml
     /// </summary>
     public partial class SearchAndDownload : Window
-    {//FileNotFoundLabel
-        private string emptyFieldsError = "Search field have to be filled";
+    {
+        // FileNotFoundLabel
+        private string emptyFields = "Search field is empty";
         private string fileNotFound = "File not found";
-        private List<TransferFileDetails> tfd;
-        private TransferFileDetails tfdForTransfer;
-        private User currentUser;
-        private NetworkStream ns;
 
-        public SearchAndDownload(NetworkStream ns, User user)
+        public TransferFileDetails TransferFileDetails { get; set; }
+
+        private List<TransferFileDetails> transferFileList;
+        private User currentUser;
+        private NetworkStream stream;
+
+        public SearchAndDownload(NetworkStream stream, User currentUser)
         {
             InitializeComponent();
-            this.ns = ns;
-            this.currentUser = user;
+
+            this.currentUser = currentUser;
+            this.stream = stream;
+
+            transferFileList = new List<TransferFileDetails>();
         }
 
-        public TransferFileDetails getTfdForTransfer()
-        { return tfdForTransfer; }
-
-        private void SearchButton_Click(object sender, RoutedEventArgs e)
+        private void Btn_search_Click(object sender, RoutedEventArgs e)
         {
             string fileName = fileNameTextBox.Text.Trim();
-            if(fileName.Trim().Equals(""))
+
+            if (string.IsNullOrEmpty(fileName.Trim()))
             {
-                FileNotFoundLabel.Content = emptyFieldsError;
-                FileNotFoundLabel.Visibility = Visibility.Visible;
+                SearchStatusLabel.Content = emptyFields;
+                SearchStatusLabel.Visibility = Visibility.Visible;
             }
             else
             {
-                FileNotFoundLabel.Visibility = Visibility.Hidden;
-                sendSearchFileRequest(fileName);
+                SearchStatusLabel.Visibility = Visibility.Hidden;
+                SendSearchFileRequest(fileName);
             }
-            
         }
 
-        public async void sendSearchFileRequest(string fName)
+        public async void SendSearchFileRequest(string fileName)
         {
-            ClientSearchReq csr = new ClientSearchReq(fName, currentUser.UserName, currentUser.Password);
+            ClientSearchReq clientSearchRequest = new ClientSearchReq(fileName, currentUser.UserName, currentUser.Password);
 
-            string jasonStriing = JsonConvert.SerializeObject(csr);
+            string jsonString = JsonConvert.SerializeObject(clientSearchRequest);
+            byte[] jsonBytes = ASCIIEncoding.ASCII.GetBytes(jsonString);
+            byte[] jsonSize = BitConverter.GetBytes(jsonBytes.Length);
 
-            byte[] jsonFile = ASCIIEncoding.ASCII.GetBytes(jasonStriing);
-            byte[] jsonFileLength = BitConverter.GetBytes(jsonFile.Length);
+            // Write size.
+            await stream.WriteAsync(jsonSize, 0, jsonSize.Length);
 
-            await ns.WriteAsync(jsonFileLength, 0, jsonFileLength.Length);
-            await ns.WriteAsync(jsonFile, 0, jsonFile.Length);
+            // Write ClientSearchReq as json to server.
+            await stream.WriteAsync(jsonBytes, 0, jsonBytes.Length);
 
             byte[] answer = new byte[1];
-            await ns.ReadAsync(answer, 0, 1);
+
+            // Read answer from server.
+            await stream.ReadAsync(answer, 0, 1);
 
             if (answer[0] == 0)
             {
-                FileNotFoundLabel.Content = fileNotFound;
-                FileNotFoundLabel.Visibility = Visibility.Visible;
+                // Error.
+                SearchStatusLabel.Content = fileNotFound;
+                SearchStatusLabel.Visibility = Visibility.Visible;
                 return;
             }
+
             else
             {
-                FileNotFoundLabel.Visibility = Visibility.Hidden;
-                getJsonFile();
+                // Success.
+                SearchStatusLabel.Visibility = Visibility.Hidden;
+                GetResponseFromServer();
             }
         }
 
-        public async void getJsonFile()
+        public async void GetResponseFromServer()
         {
-            string jsonFile;
+            string jsonString;
             byte[] jsonBytes;
-            byte[] jsonLengthBytes = new byte[4]; //int32
+            byte[] jsonSize = new byte[4]; // int32
 
-            List<TransferFileDetails> tfList = new List<TransferFileDetails>();
+            // Read size.
+            await stream.ReadAsync(jsonSize, 0, 4);
+            jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
 
-            await ns.ReadAsync(jsonLengthBytes, 0, 4); // int32
-            jsonBytes = new byte[BitConverter.ToInt32(jsonLengthBytes, 0)];
-            await ns.ReadAsync(jsonBytes, 0, jsonBytes.Length);
+            // Read List<TransferFileDetails> as json.
+            await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
+            jsonString = ASCIIEncoding.ASCII.GetString(jsonBytes);
 
-            jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
-
-            tfd = new List<TransferFileDetails>();
-            tfd = JsonConvert.DeserializeObject<List<TransferFileDetails>>(jsonFile);
-            dataGrid.ItemsSource = tfd;
-            
+            // Convert json to List<TransferFileDetails>.
+            transferFileList = JsonConvert.DeserializeObject<List<TransferFileDetails>>(jsonString);
+            dataGrid.ItemsSource = transferFileList;
         }
 
-        private void cancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.Close();
-        }
-
-        private void dataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             DownloadButton.Visibility = Visibility.Visible;
         }
 
         private void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
-            TransferFileDetails temp = (TransferFileDetails) dataGrid.SelectedItem;
-            //UserControlPanel.newDownload(temp);
-            tfdForTransfer = temp;
+            TransferFileDetails = (TransferFileDetails)dataGrid.SelectedItem;
+            this.Close();
+        }
+
+        private void Btn_cancel_Click(object sender, RoutedEventArgs e)
+        {
             this.Close();
         }
     }

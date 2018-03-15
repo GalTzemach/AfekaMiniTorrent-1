@@ -2,22 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Diagnostics;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace MiniTorrent
 {
@@ -26,77 +18,47 @@ namespace MiniTorrent
     /// </summary>
     public partial class UserControlPanel : Window
     {
-        private NetworkStream ns;
+        private const int BUFFER_SIZE = 50000;
+
+        private NetworkStream stream;
+        private static User currentUser;
+
         private static List<FileStatus> uploadFiles;
         private static List<FileStatus> downloadFiles;
-        private static User currentUser;
-        private delegate void myDelegate();
-        private static BackgroundWorker bw;
-        private static BackgroundWorker bwReflactionButton;
-        private static object _lock = new object();
-        private static bool activeFlag;
 
-        public UserControlPanel(NetworkStream ns, List<FileStatus> uploadFiles, User currentUser)
+        private delegate void delegate1();
+        private static BackgroundWorker bwProgressBarUpdate;
+        private static BackgroundWorker bwReflactionButton;
+
+        private static object thisLock;
+        private static bool isActiveUser;
+
+        public UserControlPanel(NetworkStream stream, List<FileStatus> uploadFiles, User currentUser)
         {
             InitializeComponent();
+
+            thisLock = new object();
+            isActiveUser = true;
+            this.stream = stream;
+
             downloadFiles = new List<FileStatus>();
-            bw = new BackgroundWorker();
-            bwReflactionButton = new BackgroundWorker();
-            activeFlag = true;
-            this.ns = ns;
+            uploadFiles = new List<FileStatus>();
             UserControlPanel.uploadFiles = uploadFiles;
             UserControlPanel.currentUser = currentUser;
-            uploadDataGrid.ItemsSource = uploadFiles;
-            downloadDataGrid.ItemsSource = downloadFiles;
-            bw.DoWork += bw_DoWork;
-            bwReflactionButton.DoWork += bwReflactionButton_DoWork;
-            checkForReflactionFile();
-            clientStartListening();
+            upload_DataGrid.ItemsSource = uploadFiles;
+            download_DataGrid.ItemsSource = downloadFiles;
+
+            bwProgressBarUpdate = new BackgroundWorker();
+            bwReflactionButton = new BackgroundWorker();
+            bwProgressBarUpdate.DoWork += BwProgressBarUpdate_DoWork;
+            bwReflactionButton.DoWork += BwReflactionButton_DoWork;
+
+            CheckForReflactionFile();
+            StartListeningForFileReq();
         }
 
-        private void button_Click(object sender, RoutedEventArgs e)
-        {
-            SearchAndDownload sad = new SearchAndDownload(ns, currentUser);
-            sad.ShowDialog();
-            if(sad.getTfdForTransfer() != null)
-            {
-                TransferFileDetails tfd = sad.getTfdForTransfer();
-                downloadFiles.Add(new FileStatus(tfd.FileName, tfd.FileSize, "Downloading"));
-
-                updateDataGrid();
-                
-                DownloadHandler dh = new DownloadHandler();
-                dh.download(tfd, downloadDataGrid);
-            }            
-        }
-
-        private void updateDataGrid()
-        {
-            downloadDataGrid.Items.Refresh();
-            uploadDataGrid.Items.Refresh();
-        }
-
-        private void showReclactionButton()
-        {
-            reflection.Visibility = Visibility.Visible;
-        }
-
-        //BackgroundWorker for progress bar update
-        private void bw_DoWork(object sender, DoWorkEventArgs e)
-        {
-            myDelegate deli = new myDelegate(updateDataGrid);
-            downloadDataGrid.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, deli);
-        }
-
-        //BackgroundWorker for reflaction button visibality
-        private void bwReflactionButton_DoWork(object sender, DoWorkEventArgs e)
-        {
-            myDelegate deli = new myDelegate(showReclactionButton);
-            reflection.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, deli);
-        }
-
-        //check if there is a reflaction dll
-        public void checkForReflactionFile()
+        // Check if exist reflaction.dll file.
+        public void CheckForReflactionFile()
         {
             if (File.Exists(currentUser.DownloadPath + "\\reflection.dll"))
             {
@@ -105,360 +67,456 @@ namespace MiniTorrent
             }
         }
 
-        //client waiting for other clients request
-        public async void clientStartListening()
+        // BackgroundWorker for progress bar update.
+        private void BwProgressBarUpdate_DoWork(object sender, DoWorkEventArgs e)
         {
-            TcpListener cleintListener = null;
+            delegate1 del = new delegate1(UpdateDataGrid);
+            download_DataGrid.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, del);
+        }
+
+        // BackgroundWorker for show reflaction button.
+        private void BwReflactionButton_DoWork(object sender, DoWorkEventArgs e)
+        {
+            delegate1 del = new delegate1(ShowReclactionButton);
+            reflection.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, del);
+        }
+
+        private void UpdateDataGrid()
+        {
+            download_DataGrid.Items.Refresh();
+            upload_DataGrid.Items.Refresh();
+        }
+
+        private void ShowReclactionButton()
+        {
+            reflection.Visibility = Visibility.Visible;
+        }
+
+        private void Btn_download_Click(object sender, RoutedEventArgs e)
+        {
+            SearchAndDownload searchAndDownload = new SearchAndDownload(stream, currentUser);
+            searchAndDownload.ShowDialog();
+
+            if (searchAndDownload.TransferFileDetails != null)
+            {
+                TransferFileDetails transferFileDetails = searchAndDownload.TransferFileDetails;
+                downloadFiles.Add(new FileStatus(transferFileDetails.FileName, transferFileDetails.FileSize, "Downloading.."));
+
+                UpdateDataGrid();
+
+                DownloadFileHandler downloadFile = new DownloadFileHandler(transferFileDetails, download_DataGrid);
+            }
+        }
+
+        // Client listening for other client file request.
+        public async void StartListeningForFileReq()
+        {
+            TcpListener clientListener = null;
 
             try
             {
-                cleintListener = new TcpListener(IPAddress.Parse(currentUser.Ip), currentUser.UpPort);
-                cleintListener.Start();
+                clientListener = new TcpListener(IPAddress.Parse(currentUser.Ip), currentUser.UpPort);
+                clientListener.Start();
 
-                while (activeFlag)
+                while (isActiveUser)
                 {
-                    TcpClient clientSocket = await cleintListener.AcceptTcpClientAsync();
-                    UploadHandler client = new UploadHandler();
-                    client.startUpload(clientSocket);
+                    TcpClient clientSocket = await clientListener.AcceptTcpClientAsync();
+                    UploadFileHandler uploadFile = new UploadFileHandler(clientSocket);
                 }
             }
+
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
             }
+
             finally
             {
-                cleintListener.Stop();
+                clientListener.Stop();
             }
         }
 
-        //class that deal with uploads
-        public class UploadHandler
+        // This class handle file uploads.
+        public class UploadFileHandler
         {
             private TcpClient clientSocket;
+            private NetworkStream stream;
+            private FileRequest fileRequest;
 
-            public void startUpload(TcpClient inClientSocket)
+            public UploadFileHandler(TcpClient clientSocket)
             {
-                this.clientSocket = inClientSocket;
-                Thread t = new Thread(newClient);
-                t.Start();
-            }
-            private void newClient()
-            {
-                NetworkStream ns = clientSocket.GetStream();
-                getFileToDownload(ns);                
+                this.clientSocket = clientSocket;
+                this.stream = this.clientSocket.GetStream();
+
+                Thread thread = new Thread(GetFileRequest);
+                thread.Start();
             }
 
-            public async void getFileToDownload(NetworkStream ns)
+            public async void GetFileRequest()
             {
                 string jsonFile;
                 byte[] jsonBytes;
-                byte[] jsonLengthBytes = new byte[4]; //int32
+                byte[] jsonSize = new byte[4]; // int 32.
 
-                await ns.ReadAsync(jsonLengthBytes, 0, 4); // int32
-                jsonBytes = new byte[BitConverter.ToInt32(jsonLengthBytes, 0)];
-                await ns.ReadAsync(jsonBytes, 0, jsonBytes.Length);
+                // Read size.
+                await stream.ReadAsync(jsonSize, 0, 4);
 
+                // Read FileRequest object as json.
+                jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
+                await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
+
+                // Convert to FileRequest object.
                 jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
-                
-                ClientUploadDownload cup  = JsonConvert.DeserializeObject<ClientUploadDownload>(jsonFile);
-                startSendFile(cup, ns);
+                fileRequest = JsonConvert.DeserializeObject<FileRequest>(jsonFile);
+
+                StartUploadFile();
             }
 
-            private async void startSendFile(ClientUploadDownload cup, NetworkStream ns)
+            private async void StartUploadFile()
             {
+                FileStatus fileStatus = null;
+                FileInfo fileInfo = null;
                 FileStream fileStream = null;
-                FileStatus fas = null;
+                string filePath;
 
-                foreach (FileStatus tempFas in uploadFiles)
+                foreach (FileStatus tempFileStatus in uploadFiles)
                 {
-                    if (tempFas.FileName.Equals(cup.FileName))
-                        fas = tempFas;
+                    if (tempFileStatus.FileName.Equals(fileRequest.FileName))
+                    {
+                        fileStatus = tempFileStatus;
+                        break;
+                    }
                 }
 
                 try
-                { 
-                    string path = currentUser.UploadPath + "\\" + cup.FileName;
-                    FileInfo file = new FileInfo(path);
-                    fileStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read);
-                    
-                    long total = cup.ToByte - cup.FromByte;
-                    long ToatlSent = 0;
-                    long totalLeft = total;
-                    int len = 0;
-                    byte[] buffer = new byte[50000];
+                {
+                    filePath = currentUser.UploadPath + "\\" + fileRequest.FileName;
+                    fileInfo = new FileInfo(filePath);
+                    fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
 
-                    fileStream.Seek(cup.FromByte, 0);
-                    while (ToatlSent < total && ns.CanWrite && activeFlag)
+                    long totalSize = fileRequest.ToByte - fileRequest.FromByte;
+                    long totalSend = 0;
+                    long totalLeft = totalSize;
+
+                    int AmountOfByteRead = 0;
+                    byte[] buffer = new byte[BUFFER_SIZE];
+
+                    // Looking for where you start sending
+                    fileStream.Seek(fileRequest.FromByte, 0);
+
+                    while (totalSend < totalSize && stream.CanWrite && isActiveUser)
                     {
-                        //Read from the File (len contains the number of bytes read)
-                        if (totalLeft > 50000)
-                            len = fileStream.Read(buffer, 0, buffer.Length);
-                        else
-                            len = fileStream.Read(buffer, 0, (int)totalLeft);
-                        //Write the Bytes on the Socket
-                        await ns.WriteAsync(buffer, 0, len);
-                        //Increase the bytes Read counter
-                        ToatlSent += len;                        
+                        // Read data from file to buffer.
+                        AmountOfByteRead = fileStream.Read(buffer, 0, totalLeft > BUFFER_SIZE ? buffer.Length : (int)totalLeft);
 
-                            double pctread = ((double)ToatlSent / total) * 100;
-                            fas.PercentCompleted = Convert.ToInt32(pctread);
-                            fas.Status = "Uploading";
+                        // Write this data on the stream.
+                        await stream.WriteAsync(buffer, 0, AmountOfByteRead);
 
-                            while (bw.IsBusy) ;
-                            bw.RunWorkerAsync();                                    
- 
-                    }                   
+                        // Update totalSend.
+                        totalSend += AmountOfByteRead;
+
+                        double percentCompleted = ((double)totalSend / totalSize) * 100;
+                        fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
+                        fileStatus.Status = "Uploading..";
+
+                        // Update UI.
+                        while (bwProgressBarUpdate.IsBusy) ;
+                        bwProgressBarUpdate.RunWorkerAsync();
+
+                    }
                 }
+
                 catch (Exception e)
                 {
-                    Console.WriteLine("A Exception occured in transfer" + e.ToString());
-                    fas.Status = "Error";
-                    while (bw.IsBusy) ;
-                    bw.RunWorkerAsync();
-                    MessageBoxResult result = MessageBox.Show("There was a problem with " + cup.FileName + "transfer");
+                    fileStatus.Status = "Error uploading";
+                    Console.WriteLine("An Exception occurred while uploading a file" + "\n\t Exception:" + e.ToString());
+
+                    while (bwProgressBarUpdate.IsBusy) ;
+                    bwProgressBarUpdate.RunWorkerAsync();
+                    MessageBoxResult result = MessageBox.Show("There was a problem with uploading file: " + fileRequest.FileName, "Alert");
                 }
+
                 finally
                 {
+                    fileStatus.Status = "Cancel";
 
-                    fas.Status = "Completed";
-                    while (bw.IsBusy) ;
-                    bw.RunWorkerAsync();
+                    while (bwProgressBarUpdate.IsBusy) ;
+                    bwProgressBarUpdate.RunWorkerAsync();
 
-                    ns.Close();
+                    stream.Close();
+
                     if (fileStream != null)
                     {
                         fileStream.Dispose();
                         fileStream.Close();
-                    }                        
+                    }
                 }
             }
         }
 
-        //class that deals with downloads from clients
-        public class DownloadHandler
+        // This class handle file downloads.
+        public class DownloadFileHandler
         {
-            private TransferFileDetails tfd;
-            private string fileName;
-            private long fileSize;
-            private long downloaded;
-            private int numOfPears;
-            private int bytesPerPear;
-            private FileInfo fi;
-            private FileStream fileStream;
-            private string path;
-            private Stopwatch stopWatch;
-            private DataGrid downloadDataGrid;
-            private AutoResetEvent[] autoEvents;
-            private bool vaildFlag = true;
+            //private string fileName;
+            //private long fileSize;
+            //private int numOfPeers;
 
-            public void download(TransferFileDetails tfd, DataGrid downloadDataGrid)
+            private AutoResetEvent[] autoResetEvents;
+            private TransferFileDetails transferFileDetails;
+            private DataGrid downloadDataGrid;
+            private Stopwatch stopWatch;
+            private FileStream fileStream;
+
+            private int bytesPerPeer;
+            private bool isValidFile = true;
+
+            public DownloadFileHandler(TransferFileDetails transferFileDetails, DataGrid downloadDataGrid)
             {
-                this.tfd = tfd;
-                this.fileName = tfd.FileName;
-                fileSize = tfd.FileSize;
-                numOfPears = tfd.PeersCount;
+                this.transferFileDetails = transferFileDetails;
                 this.downloadDataGrid = downloadDataGrid;
-                bytesPerPear = (int)fileSize / numOfPears;
+
+                //this.fileName = transferFileDetails.FileName;
+                //this.fileSize = transferFileDetails.FileSize;
+                //this.numOfPeers = transferFileDetails.NumOfPeers;
+
+                bytesPerPeer = (int)this.transferFileDetails.FileSize / this.transferFileDetails.NumOfPeers;
+
                 stopWatch = new Stopwatch();
                 stopWatch.Start();
-                Thread t = new Thread(beginDownload);
-                t.Start();
+
+                Thread thread = new Thread(StartDownload);
+                thread.Start();
             }
 
-            public void beginDownload()
-            { 
+            private void StartDownload()
+            {
+                FileInfo fileInfo;
+
+                string filePath;
+
                 try
                 {
-                    path = currentUser.DownloadPath + "\\" + fileName;
-                    fi = new FileInfo(path);
-                    fileStream = new FileStream(fi.FullName, FileMode.Create, FileAccess.Write);
-                }
-                catch(Exception e)
-                {
-                    MessageBoxResult result = MessageBox.Show(e.ToString(), "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                }                
-                
-                splitWork();
-                
-            }
-
-            //split the download (P2P)
-            public void splitWork()
-            {
-                autoEvents = new AutoResetEvent[numOfPears];
-                for (int i = 0; i < numOfPears; i++)
-                    autoEvents[i] = new AutoResetEvent(false);
-                
-                long bytesSpred = 0;
-                int count = 1;
-                foreach (Peer p in tfd.Peers)
-                {
-                    if(count == numOfPears)
-                    {
-                        long temp1 = bytesSpred;
-                        int tempCount = count++;
-                        Thread thread = new Thread(() => connectToPear(p, temp1, fileSize, tempCount));
-                        thread.Start();                        
-                    }
-                    else
-                    {
-                        long temp2 = bytesSpred;
-                        int tempCount = count++;
-                        Thread thread = new Thread(() => connectToPear(p, temp2, temp2 + bytesPerPear, tempCount));
-                        thread.Start();
-                    }
-                    
-                    bytesSpred += bytesPerPear;
+                    filePath = currentUser.DownloadPath + "\\" + transferFileDetails.FileName;
+                    fileInfo = new FileInfo(filePath);
+                    fileStream = new FileStream(fileInfo.FullName, FileMode.Create, FileAccess.Write);
                 }
 
-                WaitHandle.WaitAll(autoEvents);
-                finishTransfer();
-            }
-
-            private async void connectToPear(Peer p, long fromByte, long toByte, int num)
-            {
-                long startPos = fromByte;
-                FileStatus fas = null;
-
-                foreach (FileStatus tempFas in downloadFiles)
-                {
-                    if (tempFas.FileName.Equals(fileName))
-                        fas = tempFas;
-                }
-
-                TcpClient client = new TcpClient();
-                await client.ConnectAsync(p.Ip, p.Port);
-                NetworkStream ns = client.GetStream();
-
-                sendFileNameAndPart(ns, fileName, fromByte, toByte);
-
-                int i = 1;
-                try
-                {
-                    //loop till the Full bytes have been read
-                    while (startPos< toByte && fileStream.CanWrite && activeFlag)
-                    {
-                        byte[] buffer = new byte[50000];
-                        i = ns.Read(buffer, 0, buffer.Length);
-                        lock (_lock)
-                        {
-                            downloaded += i;
-                            fileStream.Seek(startPos, 0);
-                            fileStream.Write(buffer, 0, (int)i);
-                        }
-                        
-                        lock (_lock)
-                        {                                    
-                            double pctread = ((double)downloaded / tfd.FileSize) * 100;
-                            fas.PercentCompleted = Convert.ToInt32(pctread);                                    
-                            while (bw.IsBusy) ;
-                            bw.RunWorkerAsync();
-                        } 
-                        startPos += i;
-                    }                   
-                }
                 catch (Exception e)
                 {
-                    vaildFlag = false;
+                    MessageBoxResult result = MessageBox.Show(e.ToString(), " Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                }
+
+                SplitDownloadWork();
+            }
+
+            // Split the download (by P2P concept).
+            private void SplitDownloadWork()
+            {
+                // In order to determine when all peers finish their work.
+                autoResetEvents = new AutoResetEvent[transferFileDetails.NumOfPeers];
+
+                for (int i = 0; i < transferFileDetails.NumOfPeers; i++)
+                    autoResetEvents[i] = new AutoResetEvent(false);
+
+                long BytesCompleted = 0;
+                int peerNumber = 1;
+
+                // Divides the requests to all peers.
+                foreach (Peer peer in transferFileDetails.Peers)
+                {
+                    if (peerNumber == transferFileDetails.NumOfPeers)
+                    {
+                        Thread thread = new Thread(() => DownloadRequestFromPeer(peer, BytesCompleted, transferFileDetails.FileSize, peerNumber++));
+                        thread.Start();
+                    }
+
+                    else
+                    {
+                        Thread thread = new Thread(() => DownloadRequestFromPeer(peer, BytesCompleted, BytesCompleted + bytesPerPeer, peerNumber++));
+                        thread.Start();
+                    }
+
+                    BytesCompleted += bytesPerPeer;
+                }
+
+                // Wait until all peers finish their work.
+                WaitHandle.WaitAll(autoResetEvents);
+
+                FinishTransfer();
+            }
+
+            private async void DownloadRequestFromPeer(Peer peer, long fromByte, long toByte, int peerNumber)
+            {
+                FileRequest fileRequest = new FileRequest(transferFileDetails.FileName, fromByte, toByte);
+                FileStatus fileStatus = null;
+
+                foreach (FileStatus tempFileStatus in downloadFiles)
+                {
+                    if (tempFileStatus.FileName.Equals(transferFileDetails.FileName))
+                        fileStatus = tempFileStatus;
+                }
+
+                TcpClient clientSocket = new TcpClient();
+
+                // Connects to specific peer.
+                await clientSocket.ConnectAsync(peer.Ip, peer.Port);
+                NetworkStream stream = clientSocket.GetStream();
+
+                SendFileRequest(stream, fileRequest);
+
+                ReadFileRequest(stream, fileRequest, fileStatus, peerNumber);
+            }
+
+            private async void SendFileRequest(NetworkStream stream, FileRequest fileRequest)
+            {
+                string jsonString = JsonConvert.SerializeObject(fileRequest);
+                byte[] jsonBytes = ASCIIEncoding.ASCII.GetBytes(jsonString);
+                byte[] jsonSize = BitConverter.GetBytes(jsonBytes.Length);
+
+                // Write size.
+                await stream.WriteAsync(jsonSize, 0, jsonSize.Length);
+
+                // Write FileRwquest object as json.
+                await stream.WriteAsync(jsonBytes, 0, jsonBytes.Length);
+            }
+
+            private void ReadFileRequest(NetworkStream stream, FileRequest fileRequest, FileStatus fileStatus, int peerNumber)
+            {
+                // Read file request you sent.
+                byte[] buffer = new byte[BUFFER_SIZE];
+
+                int AmountOfByteRead = 0;
+                long totalBytesRead = 0;
+
+                long currentPos = fileRequest.FromByte;
+
+                try
+                {
+                    // Loop until read all relevant bytes.
+                    while (currentPos < fileRequest.ToByte && fileStream.CanWrite && isActiveUser)
+                    {
+                        // Read data.
+                        AmountOfByteRead = stream.Read(buffer, 0, buffer.Length);
+
+                        lock (thisLock)
+                        {
+                            fileStream.Seek(currentPos, 0);
+                            fileStream.Write(buffer, 0, (int)AmountOfByteRead);
+
+                            totalBytesRead += AmountOfByteRead;
+                            currentPos += AmountOfByteRead;
+
+                            double percentCompleted = ((double)totalBytesRead / transferFileDetails.FileSize) * 100;
+                            fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
+                        }
+
+                        // Update UI.
+                        while (bwProgressBarUpdate.IsBusy) ;
+                        bwProgressBarUpdate.RunWorkerAsync();
+                    }
+                }
+
+                catch (Exception e)
+                {
+                    isValidFile = false;
+
                     fileStream.Close();
                     Console.WriteLine(e);
-                    //MessageBoxResult result = MessageBox.Show("There was a problem with " + fileName + "transfer", "Alert");
+                    //// MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName, "Alert");
                 }
+
                 finally
                 {
-                    ns.Close();
-                    autoEvents[num - 1].Set();
+                    stream.Close();
+                    autoResetEvents[peerNumber - 1].Set();
                 }
             }
 
-            private async void sendFileNameAndPart(NetworkStream ns, string fileName, long fromByte, long toByte)
+            private void FinishTransfer()
             {
-                ClientUploadDownload cup = new ClientUploadDownload(fileName, fromByte, toByte);
+                FileStatus fileStatus = null;
 
-                string jasonStriing = JsonConvert.SerializeObject(cup);
-
-                byte[] jsonFile = ASCIIEncoding.ASCII.GetBytes(jasonStriing);
-                byte[] jsonFileLength = BitConverter.GetBytes(jsonFile.Length);
-
-                await ns.WriteAsync(jsonFileLength, 0, jsonFileLength.Length);
-                await ns.WriteAsync(jsonFile, 0, jsonFile.Length);
-            }
-
-            private void finishTransfer()
-            {
-                FileStatus fas = null;
-
-                foreach (FileStatus tempFas in downloadFiles)
+                foreach (FileStatus tempFileStatus in downloadFiles)
                 {
-                    if (tempFas.FileName.Equals(fileName))
-                        fas = tempFas;
+                    if (tempFileStatus.FileName.Equals(transferFileDetails.FileName))
+                        fileStatus = tempFileStatus;
                 }
 
-                if (!vaildFlag)
-                {
-                    fas.PercentCompleted = 0;
-                    fas.Status = "Error";
-                    MessageBox.Show("There was a problem with " + fileName + "transfer");                    
-                }
-
-                else
+                if (isValidFile)
                 {
                     stopWatch.Stop();
-                    TimeSpan ts = stopWatch.Elapsed;
-                    // Format and display the TimeSpan value.
+                    TimeSpan timeSpan = stopWatch.Elapsed;
+
+                    // Format and display the elapsed time.
                     string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}",
-                        ts.Hours, ts.Minutes, ts.Seconds);
-                    fas.BitRate = fas.FileSize / ts.Milliseconds;
-                    fas.Status = "Completed";
-                    fas.TotaTime = elapsedTime;
+                        timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
+
+                    fileStatus.TotaTime = elapsedTime;
+                    fileStatus.BitRate = fileStatus.FileSize / timeSpan.Milliseconds;
+                    fileStatus.Status = "Download completed";
+
                     fileStream.Close();
 
-                    if (fileName.Trim().Equals("reflection.dll"))
+                    // Visible reflection button if needed.
+                    if (transferFileDetails.FileName.Trim().Equals("reflection.dll"))
                     {
                         while (bwReflactionButton.IsBusy) ;
                         bwReflactionButton.RunWorkerAsync();
                     }
                 }
-                while (bw.IsBusy) ;
-                bw.RunWorkerAsync();
+
+                else
+                {
+                    fileStatus.PercentCompleted = 0;
+                    fileStatus.Status = "Error downloading";
+                    MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName, "Alert");
+                    //// MessageBox.Show("There was a problem with " + transferFileDetails.FileName + "transfer");
+                }
+
+                while (bwProgressBarUpdate.IsBusy) ;
+                bwProgressBarUpdate.RunWorkerAsync();
             }
         }
 
-        private async void appExit(object sender, CancelEventArgs e)
+        private async void AppExit(object sender, CancelEventArgs e)
         {
-            activeFlag = false;
+            isActiveUser = false;
+
             try
             {
-                ClientSearchReq csr = new ClientSearchReq("exit", currentUser.UserName, currentUser.Password);
+                ClientSearchReq clientSearchRequest = new ClientSearchReq("exit", currentUser.UserName, currentUser.Password);
 
-                string jasonStriing = JsonConvert.SerializeObject(csr);
+                string jsonString = JsonConvert.SerializeObject(clientSearchRequest);
+                byte[] jsonBytes = ASCIIEncoding.ASCII.GetBytes(jsonString);
+                byte[] jsonSize = BitConverter.GetBytes(jsonBytes.Length);
 
-                byte[] jsonFile = ASCIIEncoding.ASCII.GetBytes(jasonStriing);
-                byte[] jsonFileLength = BitConverter.GetBytes(jsonFile.Length);
+                // Write size.
+                await stream.WriteAsync(jsonSize, 0, jsonSize.Length);
 
-                await ns.WriteAsync(jsonFileLength, 0, jsonFileLength.Length);
-                await ns.WriteAsync(jsonFile, 0, jsonFile.Length);
+                // Write exit request as json.
+                await stream.WriteAsync(jsonBytes, 0, jsonBytes.Length);
 
-                ns.Close();
+                stream.Close();
             }
-            catch(Exception ed)
+
+            catch (Exception ex)
             {
-                Console.WriteLine(ed.ToString());
+                Console.WriteLine(ex.ToString());
             }
-            
+
         }
 
-        private void reflection_Click(object sender, RoutedEventArgs e)
+        private void Btn_reflection_Click(object sender, RoutedEventArgs e)
         {
-            EnterNumbersMsg msg = new EnterNumbersMsg(currentUser.DownloadPath);
-            msg.ShowDialog();
+            EnterNumbersMsg enterNumbers = new EnterNumbersMsg(currentUser.DownloadPath);
+            enterNumbers.ShowDialog();
         }
 
-        //logout button
-        private void button1_Click(object sender, RoutedEventArgs e)
+        private void Btn_LogOut_Click(object sender, RoutedEventArgs e)
         {
+            // Delete configuration file.
             File.Delete("MyConfig.xml");
+
             MainWindow m = new MainWindow();
             this.Close();
         }
