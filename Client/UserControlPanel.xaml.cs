@@ -266,6 +266,7 @@ namespace MiniTorrent
             private DataGrid downloadDataGrid;
             private Stopwatch stopWatch;
             private FileStream fileStream;
+            private NetworkStream stream;
 
             private int bytesPerPeer;
             private bool isValidFile = true;
@@ -360,14 +361,14 @@ namespace MiniTorrent
 
                 // Connects to specific peer.
                 await clientSocket.ConnectAsync(peer.Ip, peer.Port);
-                NetworkStream stream = clientSocket.GetStream();
+                stream = clientSocket.GetStream();
 
-                SendFileRequest(stream, fileRequest);
+                SendFileRequest(fileRequest);
 
-                ReadFileRequest(stream, fileRequest, fileStatus, peerNumber);
+                ReadFileRequest(fileRequest, fileStatus, peerNumber);
             }
 
-            private async void SendFileRequest(NetworkStream stream, FileRequest fileRequest)
+            private async void SendFileRequest(FileRequest fileRequest)
             {
                 string jsonString = JsonConvert.SerializeObject(fileRequest);
                 byte[] jsonBytes = ASCIIEncoding.ASCII.GetBytes(jsonString);
@@ -380,7 +381,7 @@ namespace MiniTorrent
                 await stream.WriteAsync(jsonBytes, 0, jsonBytes.Length);
             }
 
-            private void ReadFileRequest(NetworkStream stream, FileRequest fileRequest, FileStatus fileStatus, int peerNumber)
+            private void ReadFileRequest(FileRequest fileRequest, FileStatus fileStatus, int peerNumber)
             {
                 // Read file request you sent.
                 byte[] buffer = new byte[BUFFER_SIZE];
