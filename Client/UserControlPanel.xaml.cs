@@ -238,7 +238,7 @@ namespace MiniTorrent
 
                 finally
                 {
-                    fileStatus.Status = "Cancel";
+                    //// fileStatus.Status = "Cancel";
 
                     while (bwProgressBarUpdate.IsBusy) ;
                     bwProgressBarUpdate.RunWorkerAsync();
