@@ -322,7 +322,7 @@ namespace MiniTorrent
                 int peerNumber = 1;
 
                 // Divides the requests to all peers.
-                foreach (Peer peer in transferFileDetails.Peers)
+                foreach (Peer peer in transferFileDetails.PeersList)
                 {
                     if (peerNumber == transferFileDetails.NumOfPeers)
                     {

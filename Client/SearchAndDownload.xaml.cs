@@ -29,8 +29,6 @@ namespace MiniTorrent
 
             this.currentUser = currentUser;
             this.stream = stream;
-
-            transferFileList = new List<TransferFileDetails>();
         }
 
         private void Btn_search_Click(object sender, RoutedEventArgs e)
@@ -99,6 +97,7 @@ namespace MiniTorrent
             jsonString = ASCIIEncoding.ASCII.GetString(jsonBytes);
 
             // Convert json to List<TransferFileDetails>.
+            transferFileList = new List<TransferFileDetails>();
             transferFileList = JsonConvert.DeserializeObject<List<TransferFileDetails>>(jsonString);
             dataGrid.ItemsSource = transferFileList;
         }
