@@ -41,8 +41,8 @@ namespace MiniTorrent
             isActiveUser = true;
             this.stream = stream;
 
-            downloadFiles = new List<FileStatus>();
-            uploadFiles = new List<FileStatus>();
+            UserControlPanel.downloadFiles = new List<FileStatus>();
+            UserControlPanel.uploadFiles = new List<FileStatus>();
             UserControlPanel.uploadFiles = uploadFiles;
             UserControlPanel.currentUser = currentUser;
             upload_DataGrid.ItemsSource = uploadFiles;

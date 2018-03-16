@@ -185,8 +185,6 @@ namespace Server
                     {
                         // Read size.
                         await stream.ReadAsync(jsonSize, 0, 4);
-                        while (bw.IsBusy) ;
-                        bw.RunWorkerAsync("File request received.\n");
                         jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
 
                         // Read SearchRequest object As json.
@@ -211,6 +209,9 @@ namespace Server
 
                             break;
                         }
+
+                        while (bw.IsBusy) ;
+                        bw.RunWorkerAsync("File request received.\n");
 
                         bool fileExistInServer = false;
 

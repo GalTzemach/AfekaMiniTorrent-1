@@ -124,11 +124,11 @@ namespace MiniTorrent
             writer.WriteString(password);
             writer.WriteEndElement(); //password
 
-            writer.WriteStartElement("upload");
+            writer.WriteStartElement("uploadPath");
             writer.WriteString(upload);
             writer.WriteEndElement(); //upload
 
-            writer.WriteStartElement("download");
+            writer.WriteStartElement("downloadPath");
             writer.WriteString(download);
             writer.WriteEndElement(); //download
 
