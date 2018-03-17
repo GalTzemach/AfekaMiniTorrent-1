@@ -5,7 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MiniTorrent"
         mc:Ignorable="d"
-        Title="UserControlPanel" Height="696.781" Width="716.542" Closing="AppExit">
+        Title="UserControlPanel" 
+        Height="696.781" Width="716.542" 
+        Closing="AppExit"
+        Left="800" Top="50">
     <Grid>
         <Button x:Name="Btn_download" Content="Download File" HorizontalAlignment="Left" Margin="587,616,0,0" VerticalAlignment="Top" Width="108" HorizontalContentAlignment="Center" Height="36" Click="Btn_download_Click"/>
         <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="13" Margin="-6,297,0,0" VerticalAlignment="Top" Width="715"/>
@@ -19,7 +22,7 @@
                 <DataGridTemplateColumn Header="Progress" Width="*" IsReadOnly="True">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <ProgressBar Value="{Binding Path=PbValue, Mode=OneWay}" Minimum="0" Maximum="100" />
+                            <ProgressBar Value="{Binding PercentCompleted, Mode=OneWay}" Minimum="0" Maximum="100" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -33,12 +36,12 @@
                 <DataGridTemplateColumn Header="Progress" Width="*" IsReadOnly="True">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <ProgressBar Value="{Binding PbValue, Mode=OneWay}" Minimum="0" Maximum="100" />
+                            <ProgressBar Value="{Binding PercentCompleted, Mode=OneWay}" Minimum="0" Maximum="100" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Binding="{Binding BitRate}" ClipboardContentBinding="{x:Null}" Header="BitRate"/>
-                <DataGridTextColumn Binding="{Binding TotalTransferTime}" ClipboardContentBinding="{x:Null}" Header="Total Time"/>
+                <DataGridTextColumn Binding="{Binding TotaTime}" ClipboardContentBinding="{x:Null}" Header="Total Time"/>
             </DataGrid.Columns>
         </DataGrid>
         <Button x:Name="reflection" Content="Reflection" HorizontalAlignment="Left" Margin="38,616,0,0" VerticalAlignment="Top" Width="86" HorizontalContentAlignment="Center" Height="36" Click="Btn_reflection_Click" Visibility="Hidden" />

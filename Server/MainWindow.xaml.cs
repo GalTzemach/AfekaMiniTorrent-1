@@ -19,7 +19,7 @@ namespace Server
         private const string SERVER_IP = "192.168.1.156";
         private const int SERVER_LISTENER_PORT = 8006;
 
-        private delegate void myDelegate(string s);
+        private delegate void delegate1(string s);
         private TcpListener serverListener;
         private static BackgroundWorker bw;
         private static ServerInformation serverInfo;
@@ -44,7 +44,7 @@ namespace Server
         // Writing a message to Log in the background
         private void Bw_DoWork(object sender, DoWorkEventArgs e)
         {
-            myDelegate delegate1 = new myDelegate(WriteToLog);
+            delegate1 delegate1 = new delegate1(WriteToLog);
             TextBox_serverLog.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, delegate1, e.Argument.ToString());
         }
 
@@ -96,13 +96,8 @@ namespace Server
                 this.clientSocket = clientSocket;
                 this.stream = this.clientSocket.GetStream();
 
-                Thread thread = new Thread(StartNewClient);
+                Thread thread = new Thread(ReceiveUserInfo);
                 thread.Start();
-            }
-
-            private void StartNewClient()
-            {
-                ReceiveUserInfo();
             }
 
             private async void ReceiveUserInfo()
@@ -275,8 +270,9 @@ namespace Server
         {
             DB.LogOffAllUsers();
             DB.DeleteAllFiles();
-            serverInfo.Close();
+
             serverListener.Stop();
+            serverInfo.Close();
         }
     }
 }

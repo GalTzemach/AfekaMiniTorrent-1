@@ -204,6 +204,10 @@ namespace MiniTorrent
                     // Looking for where you start sending
                     fileStream.Seek(fileRequest.FromByte, 0);
 
+                    fileStatus.Status = "Uploading..";
+                    while (bwProgressBarUpdate.IsBusy) ;
+                    bwProgressBarUpdate.RunWorkerAsync();
+
                     while (totalSend < totalSize && stream.CanWrite && isActiveUser)
                     {
                         // Read data from file to buffer.
@@ -217,32 +221,26 @@ namespace MiniTorrent
 
                         double percentCompleted = ((double)totalSend / totalSize) * 100;
                         fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
-                        fileStatus.Status = "Uploading..";
-
-                        // Update UI.
-                        while (bwProgressBarUpdate.IsBusy) ;
-                        bwProgressBarUpdate.RunWorkerAsync();
-
                     }
+
+                    fileStatus.Status = "Standby";
+                    while (bwProgressBarUpdate.IsBusy) ;
+                    bwProgressBarUpdate.RunWorkerAsync();
                 }
 
                 catch (Exception e)
                 {
                     fileStatus.Status = "Error uploading";
-                    Console.WriteLine("An Exception occurred while uploading a file" + "\n\t Exception:" + e.ToString());
 
                     while (bwProgressBarUpdate.IsBusy) ;
                     bwProgressBarUpdate.RunWorkerAsync();
+
+                    Console.WriteLine("An Exception occurred while uploading a file" + "\n\t Exception:" + e.ToString());
                     MessageBoxResult result = MessageBox.Show("There was a problem with uploading file: " + fileRequest.FileName, "Alert");
                 }
 
                 finally
                 {
-                    //// fileStatus.Status = "Cancel";
-
-                    while (bwProgressBarUpdate.IsBusy) ;
-                    bwProgressBarUpdate.RunWorkerAsync();
-
                     stream.Close();
 
                     if (fileStream != null)
@@ -425,7 +423,7 @@ namespace MiniTorrent
 
                     fileStream.Close();
                     Console.WriteLine(e);
-                    //// MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName, "Alert");
+                    MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName, "Alert");
                 }
 
                 finally
@@ -473,7 +471,7 @@ namespace MiniTorrent
                     fileStatus.PercentCompleted = 0;
                     fileStatus.Status = "Error downloading";
                     MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName, "Alert");
-                    //// MessageBox.Show("There was a problem with " + transferFileDetails.FileName + "transfer");
+                    // MessageBox.Show("There was a problem with " + transferFileDetails.FileName + "transfer");
                 }
 
                 while (bwProgressBarUpdate.IsBusy) ;

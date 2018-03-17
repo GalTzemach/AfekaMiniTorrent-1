@@ -5,7 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Server"
         mc:Ignorable="d"
-        Title="ServerInformation" Height="408.404" Width="692.437">
+        Title="ServerInformation" 
+        Height="408.404" Width="692.437" 
+        WindowStartupLocation="Manual"
+        Left="50" Top="50">
     <Grid>
         <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="377" Margin="135,0,0,0" VerticalAlignment="Top" Width="11"/>
         <DataGrid x:Name="dataGrid_files" HorizontalAlignment="Left" Margin="165,44,0,0" VerticalAlignment="Top" Height="323" Width="509"/>

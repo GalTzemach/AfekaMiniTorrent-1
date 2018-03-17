@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MiniTorrent"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" 
+        Height="350" Width="525" WindowStartupLocation="CenterScreen">
     <Grid>
         <Label x:Name="label" Content="AviTorrent" HorizontalAlignment="Left" Margin="198,21,0,0" VerticalAlignment="Top" Height="41" Width="104" FontSize="18" FontWeight="Bold"/>
         <Button x:Name="signIn" Content="Sign In" HorizontalAlignment="Left" Margin="235,213,0,0" VerticalAlignment="Top" Width="86" Height="40" Click="SignIn_Click"/>

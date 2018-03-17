@@ -29,6 +29,7 @@ namespace MiniTorrent
         private const int UP_PORT = 8005;
         private const int SERVER_PORT = 8006;
 
+        private NetworkStream stream;
         private List<FileStatus> uploadFiles;
         private XmlHandler xmlHandler;
         private User currentUser;
@@ -223,7 +224,7 @@ namespace MiniTorrent
 
                     // Connecting to server.
                     await client.ConnectAsync(SERVER_IP, SERVER_PORT);
-                    NetworkStream stream = client.GetStream();
+                    stream = client.GetStream();
 
                     // Convert user object to json before send.
                     string jsonString = JsonConvert.SerializeObject(users[1]);
@@ -237,16 +238,16 @@ namespace MiniTorrent
                     // Write user As json.
                     await stream.WriteAsync(jsonByte, 0, jsonByte.Length);
 
-                    ServerResponse(stream, currentUser);
+                    ServerResponse(currentUser);
                 }
                 else
                 {
                     ShowErrorLabel(IncorrectConfigFile);
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                MessageBoxResult result = MessageBox.Show("Unable to connect to server");
+                MessageBoxResult result = MessageBox.Show("Unable to connect to server\n" + e);
                 this.Close();
             }
         }
@@ -269,7 +270,7 @@ namespace MiniTorrent
         }
 
         // Handle server response to Login request.
-        public async void ServerResponse(NetworkStream stream, User currentUser)
+        public async void ServerResponse(User currentUser)
         {
             byte[] answer = new byte[1];
 

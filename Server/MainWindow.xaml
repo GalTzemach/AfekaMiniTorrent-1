@@ -5,7 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Server"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525" Closing="ServerClose">
+        Title="MainWindow" 
+        Height="350" Width="525" 
+        Closing="ServerClose" 
+        WindowStartupLocation="Manual"
+        Left="50" Top="470"
+        >
     <Grid>
         <TextBox x:Name="TextBox_serverLog" HorizontalAlignment="Left" Height="278" Margin="20" TextWrapping="Wrap" VerticalAlignment="Top" Width="476" VerticalScrollBarVisibility="Auto" IsReadOnly="True"/>
     </Grid>

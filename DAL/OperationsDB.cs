@@ -64,23 +64,23 @@ namespace DAL
                         in DB.Files
                         select file;
 
-            //DB.Files.DeleteAllOnSubmit(files);
-            //lock (thisLock)
-            //{
-            //    DB.SubmitChanges();
-            //}
-
-            if (files.Count() != 0)
+            DB.Files.DeleteAllOnSubmit(files);
+            lock (thisLock)
             {
-                foreach (File f in files)
-                {
-                    DB.Files.DeleteOnSubmit(f);
-                }
-                lock (thisLock)
-                {
-                    DB.SubmitChanges();
-                }
+                DB.SubmitChanges();
             }
+
+            //if (files.Count() != 0)
+            //{
+            //    foreach (File f in files)
+            //    {
+            //        DB.Files.DeleteOnSubmit(f);
+            //    }
+            //    lock (thisLock)
+            //    {
+            //        DB.SubmitChanges();
+            //    }
+            //}
         }
 
         public void AddUser(string userName, string password)
