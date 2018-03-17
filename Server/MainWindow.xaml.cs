@@ -139,6 +139,7 @@ namespace Server
                     if (newUser != null)
                     {
                         status = DB.GetUserStatus(newUser.UserName, newUser.Password);
+                        answer[0] = (byte)status;
 
                         if (status == 1)
                         {
@@ -146,14 +147,15 @@ namespace Server
                             {
                                 // Add user files to server.
                                 serverInfo.AddUserFiles(newUser, DB);
-                                answer[0] = 1;
+
                                 await stream.WriteAsync(answer, 0, 1);
+
                                 FileRequestHandler();
                             }
                         }
+
                         else
                         {
-                            answer[0] = (byte)status;
                             await stream.WriteAsync(answer, 0, 1);
                         }
                     }
@@ -169,8 +171,6 @@ namespace Server
             {
                 while (true)
                 {
-                    // The client wait for new file request.
-
                     string jsonFile; // As string.
                     byte[] jsonBytes;// As json.
                     byte[] jsonSize = new byte[4]; // The Size (int32).

@@ -23,11 +23,10 @@ namespace Server
             this.FileList = new List<FileDetails>();
         }
 
-        //public override int GetHashCode()
-        //{
-        //    if (UserName == null) return 0;
-        //    return UserName.GetHashCode();
-        //}
+        public override int GetHashCode()
+        {
+            return UserName == null ? 0 : UserName.GetHashCode();
+        }
 
         public bool Equals(User other)
         {

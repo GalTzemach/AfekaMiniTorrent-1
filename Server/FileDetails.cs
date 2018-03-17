@@ -13,11 +13,10 @@ namespace Server
             this.FileSize = fileSize;
         }
 
-        //public override int GetHashCode()
-        //{
-        //    if (FileName == null) return 0;
-        //    return FileName.GetHashCode();
-        //}
+        public override int GetHashCode()
+        {
+            return FileName == null ? 0 : FileName.GetHashCode();
+        }
 
         public bool Equals(FileDetails other)
         {
