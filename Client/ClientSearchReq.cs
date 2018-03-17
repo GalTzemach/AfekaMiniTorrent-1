@@ -1,5 +1,8 @@
-﻿namespace MiniTorrent
+﻿using System;
+
+namespace MiniTorrent
 {
+    [Serializable]
     public class ClientSearchReq
     {
         public string FileName { get; set; }

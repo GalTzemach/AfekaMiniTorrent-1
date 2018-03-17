@@ -377,7 +377,7 @@ namespace MiniTorrent
                 // Write size.
                 await stream.WriteAsync(jsonSize, 0, jsonSize.Length);
 
-                // Write FileRwquest object as json.
+                // Write FileRequest object as json.
                 await stream.WriteAsync(jsonBytes, 0, jsonBytes.Length);
             }
 
