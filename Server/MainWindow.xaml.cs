@@ -65,9 +65,7 @@ namespace Server
 
                 while (true)
                 {
-                    TextBox_serverLog.AppendText("Server wait for a new connection...\n");
                     TcpClient clientSocket = await serverListener.AcceptTcpClientAsync();
-                    TextBox_serverLog.AppendText("New client Connected to server.\n");
                     HandleAClinet client = new HandleAClinet(clientSocket);
                 }
             }
@@ -84,7 +82,7 @@ namespace Server
             }
         }
 
-        // This class handle each client request.
+        // This class handle each client.
         public class HandleAClinet
         {
             private TcpClient clientSocket;
@@ -102,24 +100,23 @@ namespace Server
 
             private async void ReceiveUserInfo()
             {
-                string jsonFile; // As string.
+                string jsonString; // As string.
                 byte[] jsonBytes; // As json.
                 byte[] jsonSize = new byte[4]; // The Size (int32).
 
                 // Read size.
                 await stream.ReadAsync(jsonSize, 0, 4);
-                while (bw.IsBusy) ;
-                bw.RunWorkerAsync("Json size received from client.\n");
                 jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
 
                 // Read User object as Json. 
                 await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
-                while (bw.IsBusy) ;
-                bw.RunWorkerAsync("User object as json received from client.\n");
 
                 // Convert to user object from Json.
-                jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
-                currentUser = JsonConvert.DeserializeObject<User>(jsonFile);
+                jsonString = ASCIIEncoding.ASCII.GetString(jsonBytes);
+                currentUser = JsonConvert.DeserializeObject<User>(jsonString);
+
+                while (bw.IsBusy) ;
+                bw.RunWorkerAsync(currentUser.UserName + " connected to server.\n");
 
                 // Update users list.
                 AddNewUser(stream, currentUser);
@@ -206,7 +203,7 @@ namespace Server
                         }
 
                         while (bw.IsBusy) ;
-                        bw.RunWorkerAsync("File request received.\n");
+                        bw.RunWorkerAsync(currentUser.UserName + " send file request.\n");
 
                         bool fileExistInServer = false;
 

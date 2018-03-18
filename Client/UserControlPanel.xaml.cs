@@ -415,7 +415,7 @@ namespace MiniTorrent
                         lock (thisLock)
                         {
                             double percentCompleted = ((double)totalBytesRead / transferFileDetails.FileSize) * 100;
-                            fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
+                            fileStatus.PercentCompleted += Convert.ToInt32(percentCompleted);
                             while (bwProgressBarUpdate.IsBusy) ;
                             bwProgressBarUpdate.RunWorkerAsync();
                         }
