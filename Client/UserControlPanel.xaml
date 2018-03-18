@@ -17,7 +17,7 @@
         <DataGrid x:Name="upload_DataGrid" HorizontalAlignment="Left" Margin="32,355,0,0" VerticalAlignment="Top" Height="235" Width="639" AutoGenerateColumns="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding FileName}" ClipboardContentBinding="{x:Null}" Header="Name" IsReadOnly="True" MinWidth="200"/>
-                <DataGridTextColumn Binding="{Binding FileSize}" ClipboardContentBinding="{x:Null}" Header="Size" IsReadOnly="True" MinWidth="100"/>
+                <DataGridTextColumn Binding="{Binding FileSizeMB}" ClipboardContentBinding="{x:Null}" Header="Size(MB)" IsReadOnly="True" MinWidth="100"/>
                 <DataGridTextColumn Binding="{Binding Status}" ClipboardContentBinding="{x:Null}" Header="Status" IsReadOnly="True" MinWidth="100"/>
                 <DataGridTemplateColumn Header="Progress" Width="*" IsReadOnly="True">
                     <DataGridTemplateColumn.CellTemplate>
@@ -31,7 +31,7 @@
         <DataGrid x:Name="download_DataGrid" HorizontalAlignment="Left" Margin="32,46,0,0" VerticalAlignment="Top" Height="235" Width="639" AutoGenerateColumns="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding FileName}" ClipboardContentBinding="{x:Null}" Header="Name" IsReadOnly="True" MinWidth="200"/>
-                <DataGridTextColumn Binding="{Binding FileSize}" ClipboardContentBinding="{x:Null}" Header="Size" IsReadOnly="True" MinWidth="100"/>
+                <DataGridTextColumn Binding="{Binding FileSizeMB}" ClipboardContentBinding="{x:Null}" Header="Size(MB)" IsReadOnly="True" MinWidth="100"/>
                 <DataGridTextColumn Binding="{Binding Status}" ClipboardContentBinding="{x:Null}" Header="Status" IsReadOnly="True" MinWidth="100"/>
                 <DataGridTemplateColumn Header="Progress" Width="*" IsReadOnly="True">
                     <DataGridTemplateColumn.CellTemplate>
@@ -40,7 +40,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Binding="{Binding BitRate}" ClipboardContentBinding="{x:Null}" Header="BitRate"/>
+                <DataGridTextColumn Binding="{Binding BitRateMbps}" ClipboardContentBinding="{x:Null}" Header="BitRate(Mbps)"/>
                 <DataGridTextColumn Binding="{Binding TotaTime}" ClipboardContentBinding="{x:Null}" Header="Total Time"/>
             </DataGrid.Columns>
         </DataGrid>

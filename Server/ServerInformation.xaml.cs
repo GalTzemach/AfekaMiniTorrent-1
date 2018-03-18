@@ -39,7 +39,9 @@ namespace Server
 
         private void UpdateFileList(User selectedUser)
         {
+            //dataGrid_files.Items.Refresh();
             dataGrid_files.ItemsSource = selectedUser.FileList;
+            dataGrid_files.Columns.RemoveAt(1);
         }
 
         private void UpdateUserList()

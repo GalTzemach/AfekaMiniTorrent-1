@@ -451,7 +451,8 @@ namespace MiniTorrent
                         timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
 
                     fileStatus.TotaTime = elapsedTime;
-                    fileStatus.BitRate = fileStatus.FileSize / timeSpan.Milliseconds;
+                    // BitRate in Mbps = mega bit per second.
+                    fileStatus.BitRate = (fileStatus.FileSize / 1024 / 1024) / timeSpan.TotalSeconds * 8;
                     fileStatus.Status = "Download completed";
 
                     fileStream.Close();

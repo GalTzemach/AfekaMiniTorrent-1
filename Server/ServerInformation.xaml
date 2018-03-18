@@ -11,7 +11,12 @@
         Left="50" Top="50">
     <Grid>
         <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="377" Margin="135,0,0,0" VerticalAlignment="Top" Width="11"/>
-        <DataGrid x:Name="dataGrid_files" HorizontalAlignment="Left" Margin="165,44,0,0" VerticalAlignment="Top" Height="323" Width="509"/>
+        <DataGrid x:Name="dataGrid_files" HorizontalAlignment="Left" Margin="165,44,0,0" VerticalAlignment="Top" Height="323" Width="509">
+            <DataGrid.Columns>
+                <!--<DataGridTextColumn Binding="{Binding FileName}" ClipboardContentBinding="{x:Null}" Header="FileName"/>-->
+                <!--<DataGridTextColumn Binding="{Binding FileSizeMB}" ClipboardContentBinding="{x:Null}" Header="Size(MB)"/>-->
+            </DataGrid.Columns>
+        </DataGrid>
         <DataGrid x:Name="dataGrid_users" HorizontalAlignment="Left" Margin="10,44,0,0" VerticalAlignment="Top" Height="323" Width="111" MinColumnWidth="105" AutoGenerateColumns="False" SelectionChanged="DataGrid_users_SelectionChanged">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding UserName}" ClipboardContentBinding="{x:Null}" Header="UserName"/>
