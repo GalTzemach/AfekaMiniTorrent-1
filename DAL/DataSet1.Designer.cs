@@ -1315,7 +1315,7 @@ SELECT Id, FileName, FileSize, NumOfPeers FROM [File] WHERE (Id = @Id)";
             this._commandCollection[1] = new global::System.Data.SqlClient.SqlCommand();
             this._commandCollection[1].Connection = this.Connection;
             this._commandCollection[1].CommandText = "SELECT Id, FileName, FileSize, NumOfPeers\r\nFROM     [File]\r\nWHERE  (FileName LIKE" +
-                " @fileName + \'%\')";
+                " \'%\' + @fileName + \'%\')";
             this._commandCollection[1].CommandType = global::System.Data.CommandType.Text;
             this._commandCollection[1].Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@fileName", global::System.Data.SqlDbType.NVarChar, 2147483647, global::System.Data.ParameterDirection.Input, 0, 0, "FileName", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
         }

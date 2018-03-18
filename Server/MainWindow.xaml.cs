@@ -213,7 +213,7 @@ namespace Server
                             foreach (FileDetails file in serverInfo.ServerFileList.Keys)
                             {
                                 // Looking for some or all of the fileName.
-                                if (file.FileName.Contains(searchRequst.FileName))
+                                if (file.FileName.Contains(searchRequst.FileName) || searchRequst.FileName == "*")
                                 {
                                     fileExistInServer = true;
                                     filesSearchResult.Add(CreateTransferFileDetails(file));

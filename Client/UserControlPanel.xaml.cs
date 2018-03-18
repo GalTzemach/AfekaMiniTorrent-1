@@ -259,18 +259,14 @@ namespace MiniTorrent
         // This class handle file downloads.
         public class DownloadFileHandler
         {
-            //private string fileName;
-            //private long fileSize;
-            //private int numOfPeers;
-
             private AutoResetEvent[] autoResetEvents;
             private TransferFileDetails transferFileDetails;
             private DataGrid downloadDataGrid;
             private Stopwatch stopWatch;
             private FileStream fileStream;
             private FileInfo fileInfo;
-            //private NetworkStream stream;
 
+            private long totalCompleted;
             private int bytesPerPeer;
             private bool isValidFile = true;
 
@@ -278,10 +274,6 @@ namespace MiniTorrent
             {
                 this.transferFileDetails = transferFileDetails;
                 this.downloadDataGrid = downloadDataGrid;
-
-                //this.fileName = transferFileDetails.FileName;
-                //this.fileSize = transferFileDetails.FileSize;
-                //this.numOfPeers = transferFileDetails.NumOfPeers;
 
                 bytesPerPeer = (int)this.transferFileDetails.FileSize / this.transferFileDetails.NumOfPeers;
 
@@ -405,6 +397,7 @@ namespace MiniTorrent
 
                         lock (thisLock)
                         {
+                            totalCompleted += AmountOfByteRead;
                             fileStream.Seek(currentPos, 0);
                             fileStream.Write(buffer, 0, (int)AmountOfByteRead);
                         }
@@ -414,8 +407,8 @@ namespace MiniTorrent
 
                         lock (thisLock)
                         {
-                            double percentCompleted = ((double)totalBytesRead / transferFileDetails.FileSize) * 100;
-                            fileStatus.PercentCompleted += Convert.ToInt32(percentCompleted);
+                            double percentCompleted = ((double)totalCompleted / transferFileDetails.FileSize) * 100;
+                            fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
                             while (bwProgressBarUpdate.IsBusy) ;
                             bwProgressBarUpdate.RunWorkerAsync();
                         }
