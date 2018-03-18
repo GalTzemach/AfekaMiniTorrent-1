@@ -144,9 +144,7 @@ namespace Server
                             {
                                 // Add user files to server.
                                 serverInfo.AddUserFiles(newUser, DB);
-
                                 await stream.WriteAsync(answer, 0, 1);
-
                                 FileRequestHandler();
                             }
                         }

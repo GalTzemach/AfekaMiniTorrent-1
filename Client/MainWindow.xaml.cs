@@ -208,8 +208,8 @@ namespace MiniTorrent
         {
             try
             {
-                User[] users = new User[2];
-                users = xmlHandler.ReadUserFromXml();
+                //User users;
+                User users = xmlHandler.ReadUserFromXml();
 
                 if (users != null)
                 {
@@ -218,7 +218,7 @@ namespace MiniTorrent
                         UpdateFileList(users);
                     }
 
-                    currentUser = users[0];
+                    currentUser = users;
 
                     TcpClient client = new TcpClient();
 
@@ -227,7 +227,7 @@ namespace MiniTorrent
                     stream = client.GetStream();
 
                     // Convert user object to json before send.
-                    string jsonString = JsonConvert.SerializeObject(users[1]);
+                    string jsonString = JsonConvert.SerializeObject(users);
 
                     byte[] jsonByte = ASCIIEncoding.ASCII.GetBytes(jsonString);
                     byte[] jsonSize = BitConverter.GetBytes(jsonByte.Length);
@@ -253,20 +253,18 @@ namespace MiniTorrent
         }
 
         // When Login with config file, check for file changes in specific path.
-        private void UpdateFileList(User[] users)
+        private void UpdateFileList(User user)
         {
-            Dictionary<string, long> files = GetAllFiles(users[0].UploadPath);
-            users[0].FileList.Clear();
-            users[1].FileList.Clear();
-
+            Dictionary<string, long> files = GetAllFiles(user.UploadPath);
+            user.FileList.Clear();
+            
             foreach (String file in files.Keys)
             {
                 FileDetails tempFile = new FileDetails(file, files[file]);
-                users[0].FileList.Add(tempFile);
-                users[1].FileList.Add(tempFile);
+                user.FileList.Add(tempFile);
             }
 
-            xmlHandler.WriteUserToXml(users[0], files);
+            xmlHandler.WriteUserToXml(user, files);
         }
 
         // Handle server response to Login request.

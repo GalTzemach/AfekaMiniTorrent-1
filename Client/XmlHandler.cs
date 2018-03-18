@@ -16,7 +16,7 @@ namespace MiniTorrent
             this.fileName = fileName;
         }
 
-        public User[] ReadUserFromXml()
+        public User ReadUserFromXml()
         {
             string userName = "";
             string password = "";
@@ -27,7 +27,7 @@ namespace MiniTorrent
             int downPort = 0;
             string fileName = "";
             long fileSize = 0;
-            User[] users = new User[2];
+            User user = null;
 
             this.xmlReader = new XmlTextReader(this.fileName);
 
@@ -107,9 +107,8 @@ namespace MiniTorrent
                                 xmlReader.Close();
                                 return null;
                             }
-
-                            users[0] = new User(userName, password, uploadPath, downloadPath, ip, upPort, downPort);
-                            users[1] = new User(userName, password, ip, upPort, downPort);
+                            user = new User(userName, password, uploadPath, downloadPath, ip, upPort, downPort);
+                            //user[1] = new User(userName, password, ip, upPort, downPort);
                             break;
 
                         case "FileName":
@@ -122,15 +121,15 @@ namespace MiniTorrent
                             if (File.Exists(uploadPath + "\\" + fileName))
                             {
                                 fileSize = Convert.ToInt64(xmlReader.Value);
-                                users[0].FileList.Add(new FileDetails(fileName, fileSize));
-                                users[1].FileList.Add(new FileDetails(fileName, fileSize));
+                                user.FileList.Add(new FileDetails(fileName, fileSize));
+                                //user[1].FileList.Add(new FileDetails(fileName, fileSize));
                             }
                             break;
                     }
                 }
             }
             xmlReader.Close();
-            return users;
+            return user;
         }
 
         public void WriteUserToXml(User currentUser, Dictionary<string, long> files)
