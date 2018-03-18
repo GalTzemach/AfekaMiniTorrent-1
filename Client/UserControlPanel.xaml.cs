@@ -330,14 +330,16 @@ namespace MiniTorrent
                     fromByte = BytesCompleted;
                     if (peerNumber == transferFileDetails.NumOfPeers)
                     {
-                        Thread thread = new Thread(() => DownloadRequestFromPeer(peer, fromByte, transferFileDetails.FileSize, peerNumber++));
-                        thread.Start();
+                        DownloadRequestFromPeer(peer, fromByte, transferFileDetails.FileSize, peerNumber++);
+                        //Thread thread = new Thread(() => DownloadRequestFromPeer(peer, fromByte, transferFileDetails.FileSize, peerNumber++));
+                        //thread.Start();
                     }
 
                     else
                     {
-                        Thread thread = new Thread(() => DownloadRequestFromPeer(peer, fromByte, fromByte + bytesPerPeer, peerNumber++));
-                        thread.Start();
+                        DownloadRequestFromPeer(peer, fromByte, fromByte + bytesPerPeer, peerNumber++);
+                        //Thread thread = new Thread(() => DownloadRequestFromPeer(peer, fromByte, fromByte + bytesPerPeer, peerNumber++));
+                        //thread.Start();
                     }
 
                     BytesCompleted += bytesPerPeer;
