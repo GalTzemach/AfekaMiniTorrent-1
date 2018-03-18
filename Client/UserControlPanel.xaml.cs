@@ -407,14 +407,15 @@ namespace MiniTorrent
                         {
                             fileStream.Seek(currentPos, 0);
                             fileStream.Write(buffer, 0, (int)AmountOfByteRead);
+                        }
 
-                            totalBytesRead += AmountOfByteRead;
-                            currentPos += AmountOfByteRead;
+                        totalBytesRead += AmountOfByteRead;
+                        currentPos += AmountOfByteRead;
 
+                        lock (thisLock)
+                        {
                             double percentCompleted = ((double)totalBytesRead / transferFileDetails.FileSize) * 100;
                             fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
-
-                            // Update UI.
                             while (bwProgressBarUpdate.IsBusy) ;
                             bwProgressBarUpdate.RunWorkerAsync();
                         }
