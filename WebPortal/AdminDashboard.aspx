@@ -137,7 +137,6 @@
             <asp:GridView ID="GridView3" runat="server" AllowPaging="True" AutoGenerateColumns="False" CellPadding="4" DataKeyNames="Id" DataSourceID="ObjectDataSource1" ForeColor="#333333" GridLines="None">
                 <AlternatingRowStyle BackColor="White" />
                 <Columns>
-                    <asp:BoundField DataField="Id" HeaderText="Id" InsertVisible="False" ReadOnly="True" SortExpression="Id" />
                     <asp:BoundField DataField="FileName" HeaderText="FileName" SortExpression="FileName" />
                     <asp:BoundField DataField="FileSize" HeaderText="FileSize" SortExpression="FileSize" />
                     <asp:BoundField DataField="NumOfPeers" HeaderText="NumOfPeers" SortExpression="NumOfPeers" />
@@ -153,10 +152,28 @@
                 <SortedDescendingCellStyle BackColor="#E9EBEF" />
                 <SortedDescendingHeaderStyle BackColor="#4870BE" />
             </asp:GridView>
-            <asp:ObjectDataSource ID="ObjectDataSource1" runat="server" SelectMethod="SearchFileName" TypeName="DAL.OperationsDB">
+            <asp:ObjectDataSource ID="ObjectDataSource1" runat="server" DeleteMethod="Delete" InsertMethod="Insert" OldValuesParameterFormatString="original_{0}" SelectMethod="GetDataBy" TypeName="DAL.DataSet1TableAdapters.FileTableAdapter" UpdateMethod="Update">
+                <DeleteParameters>
+                    <asp:Parameter Name="Original_Id" Type="Int32" />
+                    <asp:Parameter Name="Original_FileSize" Type="Int64" />
+                    <asp:Parameter Name="Original_NumOfPeers" Type="Int32" />
+                </DeleteParameters>
+                <InsertParameters>
+                    <asp:Parameter Name="FileName" Type="String" />
+                    <asp:Parameter Name="FileSize" Type="Int64" />
+                    <asp:Parameter Name="NumOfPeers" Type="Int32" />
+                </InsertParameters>
                 <SelectParameters>
-                    <asp:ControlParameter ControlID="FileName" DefaultValue="" Name="fileName" PropertyName="Text" Type="String" />
+                    <asp:ControlParameter ControlID="FileName" DefaultValue="aaaa" Name="fileName" PropertyName="Text" Type="String" />
                 </SelectParameters>
+                <UpdateParameters>
+                    <asp:Parameter Name="FileName" Type="String" />
+                    <asp:Parameter Name="FileSize" Type="Int64" />
+                    <asp:Parameter Name="NumOfPeers" Type="Int32" />
+                    <asp:Parameter Name="Original_Id" Type="Int32" />
+                    <asp:Parameter Name="Original_FileSize" Type="Int64" />
+                    <asp:Parameter Name="Original_NumOfPeers" Type="Int32" />
+                </UpdateParameters>
             </asp:ObjectDataSource>
             <br />
             <br />
