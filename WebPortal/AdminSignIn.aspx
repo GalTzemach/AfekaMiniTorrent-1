@@ -8,7 +8,7 @@
 </head>
 <body>
     <form id="form1" runat="server">
-        <div>
+        <div style="text-align: center">
             <h1>
             <asp:Label ID="Label1" runat="server" Text="Sign in as Adminisrator"></asp:Label>
             </h1>
@@ -20,7 +20,7 @@
             <br />
             <br />
             <asp:Label ID="Label3" runat="server" Text="Password:" style="font-size: large"></asp:Label>
-            &nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;
             <asp:TextBox ID="Password" runat="server"></asp:TextBox>
             <asp:RequiredFieldValidator ID="RequiredFieldValidator2" runat="server" ErrorMessage="*Please enter Password!" ForeColor="Red" ControlToValidate="Password"></asp:RequiredFieldValidator>
             <br />

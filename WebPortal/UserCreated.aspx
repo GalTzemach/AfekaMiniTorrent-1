@@ -6,7 +6,7 @@
 <head runat="server">
     <title></title>
 </head>
-<body>
+<body style="text-align: center">
     <form id="form1" runat="server">
         <div>
             <h1>
