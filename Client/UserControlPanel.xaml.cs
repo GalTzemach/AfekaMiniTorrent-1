@@ -184,7 +184,7 @@ namespace MiniTorrent
                     if (tempFileStatus.FileName.Equals(fileRequest.FileName))
                     {
                         fileStatus = tempFileStatus;
-                        break;
+                        //break;
                     }
                 }
 
@@ -205,6 +205,7 @@ namespace MiniTorrent
                     fileStream.Seek(fileRequest.FromByte, 0);
 
                     fileStatus.Status = "Uploading..";
+
                     while (bwProgressBarUpdate.IsBusy) ;
                     bwProgressBarUpdate.RunWorkerAsync();
 
@@ -221,6 +222,9 @@ namespace MiniTorrent
 
                         double percentCompleted = ((double)totalSend / totalSize) * 100;
                         fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
+
+                        while (bwProgressBarUpdate.IsBusy) ;
+                        bwProgressBarUpdate.RunWorkerAsync();
                     }
 
                     fileStatus.Status = "Standby";
@@ -264,6 +268,7 @@ namespace MiniTorrent
             private DataGrid downloadDataGrid;
             private Stopwatch stopWatch;
             private FileStream fileStream;
+            private FileInfo fileInfo;
             //private NetworkStream stream;
 
             private int bytesPerPeer;
@@ -289,8 +294,6 @@ namespace MiniTorrent
 
             private void StartDownload()
             {
-                FileInfo fileInfo;
-
                 string filePath;
 
                 try
@@ -408,11 +411,11 @@ namespace MiniTorrent
 
                             double percentCompleted = ((double)totalBytesRead / transferFileDetails.FileSize) * 100;
                             fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
-                        }
 
-                        // Update UI.
-                        while (bwProgressBarUpdate.IsBusy) ;
-                        bwProgressBarUpdate.RunWorkerAsync();
+                            // Update UI.
+                            while (bwProgressBarUpdate.IsBusy) ;
+                            bwProgressBarUpdate.RunWorkerAsync();
+                        }
                     }
                 }
 
