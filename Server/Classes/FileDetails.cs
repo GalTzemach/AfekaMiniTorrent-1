@@ -7,6 +7,8 @@ namespace Server
         public string FileName { get; set; }
         public long FileSize { get; set; }
 
+        public double FileSizeMB { get { return Math.Round((double)(FileSize) / 1024 / 1024, 4); } }
+
         public FileDetails(string fileName, long fileSize)
         {
             this.FileName = fileName;

@@ -49,7 +49,7 @@
                     <DataGrid x:Name="dataGrid" AutoGenerateColumns="False" SelectionChanged="DataGrid_SelectionChanged" SelectionMode="Single" Grid.Row="2" LostFocus="dataGrid_LostFocus" GotFocus="dataGrid_GotFocus" >
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding FileName}" ClipboardContentBinding="{x:Null}" Header="File Name" IsReadOnly="True" Width="*"/>
-                            <DataGridTextColumn Binding="{Binding NumOfPeers}" ClipboardContentBinding="{x:Null}" Header="Number Of Clients" IsReadOnly="True"/>
+                            <DataGridTextColumn Binding="{Binding NumOfPeers}" ClipboardContentBinding="{x:Null}" Header="Number Of Peers" IsReadOnly="True"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -59,7 +59,7 @@
                 <DataGrid x:Name="upload_DataGrid" AutoGenerateColumns="False">
                     <DataGrid.Columns>
                         <DataGridTextColumn Binding="{Binding FileName}" ClipboardContentBinding="{x:Null}" Header="Name" IsReadOnly="True" />
-                        <DataGridTextColumn Binding="{Binding FileSize}" ClipboardContentBinding="{x:Null}" Header="Size" IsReadOnly="True" />
+                        <DataGridTextColumn Binding="{Binding FileSizeMB}" ClipboardContentBinding="{x:Null}" Header="Size(MB)" IsReadOnly="True" />
                         <DataGridTextColumn Binding="{Binding Status}" ClipboardContentBinding="{x:Null}" Header="Status" IsReadOnly="True" />
                         <DataGridTemplateColumn Header="Progress" Width="*" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
@@ -77,9 +77,9 @@
             <DataGrid x:Name="download_DataGrid" AutoGenerateColumns="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding FileName}" ClipboardContentBinding="{x:Null}" Header="Name" IsReadOnly="True" />
-                    <DataGridTextColumn Binding="{Binding FileSize}" ClipboardContentBinding="{x:Null}" Header="Size" IsReadOnly="True" />
+                    <DataGridTextColumn Binding="{Binding FileSizeMB}" ClipboardContentBinding="{x:Null}" Header="Size(MB)" IsReadOnly="True" />
                     <DataGridTextColumn Binding="{Binding Status}" ClipboardContentBinding="{x:Null}" Header="Status" IsReadOnly="True" />
-                    <DataGridTextColumn Binding="{Binding BitRate}" ClipboardContentBinding="{x:Null}" Header="BitRate"/>
+                    <DataGridTextColumn Binding="{Binding BitRateMbps}" ClipboardContentBinding="{x:Null}" Header="BitRate(Mbps)"/>
                     <DataGridTextColumn Binding="{Binding TotaTime}" ClipboardContentBinding="{x:Null}" Header="Total Time"/>
                     <DataGridTemplateColumn Header="Progress" IsReadOnly="True" Width="*">
                         <DataGridTemplateColumn.CellTemplate>

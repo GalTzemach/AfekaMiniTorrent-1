@@ -1,9 +1,13 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 
 namespace MiniTorrent
 {
     public class FileStatus : ObservableCollection<FileDetails>
     {
+        public double FileSizeMB { get { return Math.Round(((double)FileSize / 1024 / 1024), 4); } }
+        public double BitRateMbps { get { return Math.Round(BitRate, 4); } }
+
         public string FileName { get; set; }
         public long FileSize { get; set; }
         public string Status { get; set; }

@@ -90,9 +90,7 @@ namespace Server
 
                 while (true)
                 {
-                    TextBox_serverLog.AppendText("Server wait for a new connection...\n");
                     TcpClient clientSocket = await serverListener.AcceptTcpClientAsync();
-                    TextBox_serverLog.AppendText("New client Connected to server.\n");
                     HandleAClinet client = new HandleAClinet(clientSocket);
                 }
             }
@@ -136,17 +134,18 @@ namespace Server
                 // Read size.
                 await stream.ReadAsync(jsonSize, 0, 4);
                 while (bw.IsBusy) ;
-                bw.RunWorkerAsync("Json size received from client.\n");
                 jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
 
                 // Read User object as Json. 
                 await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
                 while (bw.IsBusy) ;
-                bw.RunWorkerAsync("User object as json received from client.\n");
 
                 // Convert to user object from Json.
                 jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
                 currentUser = JsonConvert.DeserializeObject<User>(jsonFile);
+
+                while (bw.IsBusy) ;
+                bw.RunWorkerAsync(currentUser.UserName + " connected to server.\n");
 
                 // Update users list.
                 AddNewUser(stream, currentUser);
@@ -389,6 +388,7 @@ namespace Server
         private void UpdateFileList(User selectedUser)
         {
             dataGrid_files.ItemsSource = selectedUser.FileList;
+            dataGrid_files.Columns.RemoveAt(1);
         }
 
         private void UpdateUserList()
