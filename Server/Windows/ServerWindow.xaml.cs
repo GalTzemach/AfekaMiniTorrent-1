@@ -14,15 +14,14 @@ namespace Server
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class ServerWindow : Window
     {
-        private const string SERVER_IP = "192.168.1.156";
         private const int SERVER_LISTENER_PORT = 8006;
+        private string serverIP;
 
         private delegate void delegate1(string s);
         private TcpListener serverListener;
         private static BackgroundWorker bw;
-        //private static ServerInformation serverInfo;
         private static OperationsDB DB = new OperationsDB();
         private static BackgroundWorker bwUpdateUserList;
         private static BackgroundWorker bwUpdateFileList;
@@ -33,15 +32,12 @@ namespace Server
         public static List<User> ActiveUsers;
         public static Dictionary<FileDetails, List<User>> ServerFileList;
 
-        public MainWindow()
+        public ServerWindow()
         {
             DB.LogOffAllUsers();
             DB.DeleteAllFiles();
 
             InitializeComponent();
-
-            //serverInfo = new ServerInformation();
-            //serverInfo.Show();
 
             bw = new BackgroundWorker();
             bw.DoWork += Bw_DoWork;
@@ -56,7 +52,18 @@ namespace Server
             bwUpdateUserList.DoWork += BwUpdate_DoWork;
             bwUpdateFileList.DoWork += BwSelect_DoWork;
 
+            GetIpAddress();
             ServerStart();
+        }
+
+        private void GetIpAddress()
+        {
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            {
+                socket.Connect("8.8.8.8", 65530);
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                serverIP = endPoint.Address.ToString();
+            }
         }
 
         // Writing a message to Log in the background
@@ -77,7 +84,7 @@ namespace Server
         {
             try
             {
-                serverListener = new TcpListener(IPAddress.Parse(SERVER_IP), SERVER_LISTENER_PORT);
+                serverListener = new TcpListener(IPAddress.Parse(serverIP), SERVER_LISTENER_PORT);
                 serverListener.Start();
                 TextBox_serverLog.AppendText("Server start Listening for new client request.\n");
 

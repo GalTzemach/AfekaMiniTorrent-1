@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MiniTorrent"
         mc:Ignorable="d"
-        Title="MainWindow" 
-        Height="448.326" Width="395.689" WindowStartupLocation="CenterScreen" FontFamily="Arial">
+        Title="Sign in" 
+        Height="355.568" Width="412.338" WindowStartupLocation="CenterScreen" FontFamily="Arial">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -15,7 +15,8 @@
         </Grid.RowDefinitions>
 
         <StackPanel Margin="10" Grid.Row="0">
-            <Label Content="Sign In/Up" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Padding="30" />
+            <Label Content="Sign In" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Padding="20
+                   " />
 
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -42,11 +43,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="2*"/>
                 </Grid.ColumnDefinitions>
-
-                <Label Content="IP:" Grid.Column="0"/>
-                <TextBox x:Name="ip_TextBox" Height="23" Grid.Column="1"/>
             </Grid>
-
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -87,7 +84,7 @@
         </StackPanel>
 
         <TextBlock Grid.Row="1" FontSize="16">           
-            <Hyperlink NavigateUri="http://localhost:62053/CreateNewUser.aspx">
+            <Hyperlink Click="Hyperlink_Click">
                 New user? Click here to register in the portal
             </Hyperlink>
         </TextBlock>

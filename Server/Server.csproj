@@ -57,14 +57,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="ClientSearchReq.cs" />
-    <Compile Include="FileDetails.cs" />
-    <Compile Include="ServerInformation.xaml.cs">
-      <DependentUpon>ServerInformation.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="TransferFileDetails.cs" />
-    <Compile Include="Users.cs" />
-    <Page Include="MainWindow.xaml">
+    <Compile Include="Classes\ClientSearchReq.cs" />
+    <Compile Include="Classes\FileDetails.cs" />
+    <Compile Include="Classes\TransferFileDetails.cs" />
+    <Compile Include="Classes\Users.cs" />
+    <Page Include="Windows\ServerWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -72,14 +69,10 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="Windows\ServerWindow.xaml.cs">
+      <DependentUpon>ServerWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="ServerInformation.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

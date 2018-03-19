@@ -64,35 +64,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="ClientSearchReq.cs" />
-    <Compile Include="ClientUploadDownload.cs" />
-    <Compile Include="enterNumbersMsg.xaml.cs">
-      <DependentUpon>enterNumbersMsg.xaml</DependentUpon>
+    <Compile Include="Classes\SearchRequest.cs" />
+    <Compile Include="Classes\FileRequest.cs" />
+    <Compile Include="Classes\FileDetails.cs" />
+    <Compile Include="Classes\FileStatus.cs" />
+    <Compile Include="Classes\HandleReflection.cs" />
+    <Compile Include="Classes\TransferFileDetails.cs" />
+    <Compile Include="Windows\UserWindow.xaml.cs">
+      <DependentUpon>UserWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="FileDetails.cs" />
-    <Compile Include="FilesAndStatus.cs" />
-    <Compile Include="HandleReflection.cs" />
-    <Compile Include="IpMsgBox.xaml.cs">
-      <DependentUpon>IpMsgBox.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="TransferFileDetails.cs" />
-    <Compile Include="SearchAndDownload.xaml.cs">
-      <DependentUpon>SearchAndDownload.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="UserControlPanel.xaml.cs">
-      <DependentUpon>UserControlPanel.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="User.cs" />
-    <Compile Include="XmlHandler.cs" />
-    <Page Include="enterNumbersMsg.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="IpMsgBox.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="MainWindow.xaml">
+    <Compile Include="Classes\User.cs" />
+    <Compile Include="Classes\XmlHandler.cs" />
+    <Page Include="Windows\SignIn.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -100,15 +83,11 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="Windows\SignIn.xaml.cs">
+      <DependentUpon>SignIn.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="SearchAndDownload.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UserControlPanel.xaml">
+    <Page Include="Windows\UserWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

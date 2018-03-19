@@ -103,22 +103,6 @@ namespace MiniTorrent
             reflection.Visibility = Visibility.Visible;
         }
 
-        private void Btn_download_Click(object sender, RoutedEventArgs e)
-        {
-            SearchAndDownload searchAndDownload = new SearchAndDownload(stream, currentUser);
-            searchAndDownload.ShowDialog();
-
-            if (searchAndDownload.TransferFileDetails != null)
-            {
-                TransferFileDetails transferFileDetails = searchAndDownload.TransferFileDetails;
-                downloadFiles.Add(new FileStatus(transferFileDetails.FileName, transferFileDetails.FileSize, "Downloading.."));
-
-                UpdateDataGrid();
-
-                DownloadFileHandler downloadFile = new DownloadFileHandler(transferFileDetails, download_DataGrid);
-            }
-        }
-
         // Client listening for other client file request.
         public async void StartListeningForFileReq()
         {
@@ -501,7 +485,7 @@ namespace MiniTorrent
 
             try
             {
-                ClientSearchReq clientSearchRequest = new ClientSearchReq("exit", currentUser.UserName, currentUser.Password);
+                SearchRequest clientSearchRequest = new SearchRequest("exit", currentUser.UserName, currentUser.Password);
 
                 string jsonString = JsonConvert.SerializeObject(clientSearchRequest);
                 byte[] jsonBytes = ASCIIEncoding.ASCII.GetBytes(jsonString);
@@ -567,7 +551,7 @@ namespace MiniTorrent
 
         public async void SendSearchFileRequest(string fileName)
         {
-            ClientSearchReq clientSearchRequest = new ClientSearchReq(fileName, currentUser.UserName, currentUser.Password);
+            SearchRequest clientSearchRequest = new SearchRequest(fileName, currentUser.UserName, currentUser.Password);
 
             string jsonString = JsonConvert.SerializeObject(clientSearchRequest);
             byte[] jsonBytes = ASCIIEncoding.ASCII.GetBytes(jsonString);
@@ -589,7 +573,7 @@ namespace MiniTorrent
                 // Error.
                 SearchStatusLabel.Content = fileNotFound;
                 SearchStatusLabel.Visibility = Visibility.Visible;
-                
+
                 ///G
                 DownloadButton.Visibility = Visibility.Hidden;
                 transferFileList = new List<TransferFileDetails>();

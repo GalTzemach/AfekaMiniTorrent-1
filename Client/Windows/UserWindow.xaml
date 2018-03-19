@@ -5,10 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MiniTorrent"
         mc:Ignorable="d"
-        Title="UserControlPanel" 
+        Title="User Window" 
         Height="700" Width="800" 
         Closing="AppExit"
-        Left="600" Top="20" WindowStartupLocation="Manual" FontFamily="Arial">
+        Left="650" Top="50" 
+        WindowStartupLocation="Manual" FontFamily="Arial">
 
     <Grid>
         <Grid.RowDefinitions>

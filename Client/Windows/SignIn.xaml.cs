@@ -67,7 +67,7 @@ namespace MiniTorrent
         {
             // Ckeck empty fields.
             if (string.IsNullOrEmpty(user_name_TextBox.Text.Trim()) ||
-                
+
                 string.IsNullOrEmpty(password_PasswordBox.Password.Trim()) ||
                 string.IsNullOrEmpty(upload_folder_TextBox.Text.Trim()) ||
                 string.IsNullOrEmpty(download_folder_TextBox.Text.Trim()))
@@ -126,7 +126,7 @@ namespace MiniTorrent
             writer.WriteEndElement(); //download
 
             writer.WriteStartElement("ip");
-            writer.WriteString(GetCorrectIPAddress());
+            writer.WriteString(GetIPAddress());
             writer.WriteEndElement(); //ip
 
             writer.WriteStartElement("upPort");
@@ -306,26 +306,13 @@ namespace MiniTorrent
         }
 
         // Because pc can have multiply ip addresses.
-        public string GetCorrectIPAddress()
+        public string GetIPAddress()
         {
-            List<string> IPList = new List<string>();
-
-            var hosts = Dns.GetHostEntry(Dns.GetHostName());
-
-            foreach (var ip in hosts.AddressList)
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
             {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                    IPList.Add(ip.ToString());
-            }
-
-            if (IPList.Count == 1)
-                return IPList[0];
-
-            else
-            {
-                ChooseIPAddress chooseIP = new ChooseIPAddress(IPList);
-                chooseIP.ShowDialog();
-                return chooseIP.selectedIP;
+                socket.Connect("8.8.8.8", 65530);
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                return endPoint.Address.ToString();
             }
         }
 
@@ -352,7 +339,6 @@ namespace MiniTorrent
         {
             user_name_TextBox.Clear();
             password_PasswordBox.Clear();
-            ip_TextBox.Clear();
             upload_folder_TextBox.Clear();
             download_folder_TextBox.Clear();
         }
@@ -364,6 +350,11 @@ namespace MiniTorrent
                 downloadFolderDialog.ShowDialog();
                 download_folder_TextBox.Text = downloadFolderDialog.SelectedPath;
             }
+        }
+
+        private void Hyperlink_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start("http://localhost:62053/WebPages/CreateNewUser.aspx");
         }
     }
 }
