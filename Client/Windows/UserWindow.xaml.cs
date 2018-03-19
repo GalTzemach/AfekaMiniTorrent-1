@@ -264,8 +264,8 @@ namespace MiniTorrent
             private Stopwatch stopWatch;
             private FileStream fileStream;
             private FileInfo fileInfo;
-            //private NetworkStream stream;
 
+            private long totalCompleted;
             private int bytesPerPeer;
             private bool isValidFile = true;
 
@@ -400,6 +400,7 @@ namespace MiniTorrent
 
                         lock (thisLock)
                         {
+                            totalCompleted += AmountOfByteRead;
                             fileStream.Seek(currentPos, 0);
                             fileStream.Write(buffer, 0, (int)AmountOfByteRead);
                         }
@@ -409,7 +410,7 @@ namespace MiniTorrent
 
                         lock (thisLock)
                         {
-                            double percentCompleted = ((double)totalBytesRead / transferFileDetails.FileSize) * 100;
+                            double percentCompleted = ((double)totalCompleted / transferFileDetails.FileSize) * 100;
                             fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
                             while (bwProgressBarUpdate.IsBusy) ;
                             bwProgressBarUpdate.RunWorkerAsync();

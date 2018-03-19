@@ -232,6 +232,9 @@ namespace Server
                         }
 
                         while (bw.IsBusy) ;
+                        bw.RunWorkerAsync(currentUser.UserName + " send file request.\n");
+
+                        while (bw.IsBusy) ;
                         bw.RunWorkerAsync("File request received.\n");
 
                         bool fileExistInServer = false;
