@@ -16,14 +16,22 @@ namespace Server
     /// </summary>
     public partial class MainWindow : Window
     {
+        private const string SERVER_IP = "192.168.1.156";
         private const int SERVER_LISTENER_PORT = 8006;
-        private string serverIP;
 
         private delegate void delegate1(string s);
         private TcpListener serverListener;
         private static BackgroundWorker bw;
-        private static ServerInformation serverInfo;
+        //private static ServerInformation serverInfo;
         private static OperationsDB DB = new OperationsDB();
+        private static BackgroundWorker bwUpdateUserList;
+        private static BackgroundWorker bwUpdateFileList;
+        private delegate void selectDelegate(User u);
+        private delegate void updateDelegate();
+        private static object thisLock = new object();
+
+        public static List<User> ActiveUsers;
+        public static Dictionary<FileDetails, List<User>> ServerFileList;
 
         public MainWindow()
         {
@@ -32,24 +40,23 @@ namespace Server
 
             InitializeComponent();
 
-            serverInfo = new ServerInformation();
-            serverInfo.Show();
+            //serverInfo = new ServerInformation();
+            //serverInfo.Show();
 
             bw = new BackgroundWorker();
             bw.DoWork += Bw_DoWork;
 
-            GetIpAddress();
-            ServerStart();
-        }
+            ActiveUsers = new List<User>();
+            ServerFileList = new Dictionary<FileDetails, List<User>>();
+            dataGrid_users.ItemsSource = ActiveUsers;
+            dataGrid_files.ItemsSource = ServerFileList;
 
-        private void GetIpAddress()
-        {
-            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
-            {
-                socket.Connect("8.8.8.8", 65530);
-                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
-                serverIP = endPoint.Address.ToString();
-            }
+            bwUpdateUserList = new BackgroundWorker();
+            bwUpdateFileList = new BackgroundWorker();
+            bwUpdateUserList.DoWork += BwUpdate_DoWork;
+            bwUpdateFileList.DoWork += BwSelect_DoWork;
+
+            ServerStart();
         }
 
         // Writing a message to Log in the background
@@ -70,13 +77,15 @@ namespace Server
         {
             try
             {
-                serverListener = new TcpListener(IPAddress.Parse(serverIP), SERVER_LISTENER_PORT);
+                serverListener = new TcpListener(IPAddress.Parse(SERVER_IP), SERVER_LISTENER_PORT);
                 serverListener.Start();
                 TextBox_serverLog.AppendText("Server start Listening for new client request.\n");
 
                 while (true)
                 {
+                    TextBox_serverLog.AppendText("Server wait for a new connection...\n");
                     TcpClient clientSocket = await serverListener.AcceptTcpClientAsync();
+                    TextBox_serverLog.AppendText("New client Connected to server.\n");
                     HandleAClinet client = new HandleAClinet(clientSocket);
                 }
             }
@@ -93,12 +102,14 @@ namespace Server
             }
         }
 
-        // This class handle each client.
+        // This class handle each client request.
         public class HandleAClinet
         {
             private TcpClient clientSocket;
             private User currentUser;
             private NetworkStream stream;
+
+            private static object thisLock = new object();
 
             public HandleAClinet(TcpClient clientSocket)
             {
@@ -111,23 +122,24 @@ namespace Server
 
             private async void ReceiveUserInfo()
             {
-                string jsonString; // As string.
+                string jsonFile; // As string.
                 byte[] jsonBytes; // As json.
                 byte[] jsonSize = new byte[4]; // The Size (int32).
 
                 // Read size.
                 await stream.ReadAsync(jsonSize, 0, 4);
+                while (bw.IsBusy) ;
+                bw.RunWorkerAsync("Json size received from client.\n");
                 jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
 
                 // Read User object as Json. 
                 await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
+                while (bw.IsBusy) ;
+                bw.RunWorkerAsync("User object as json received from client.\n");
 
                 // Convert to user object from Json.
-                jsonString = ASCIIEncoding.ASCII.GetString(jsonBytes);
-                currentUser = JsonConvert.DeserializeObject<User>(jsonString);
-
-                while (bw.IsBusy) ;
-                bw.RunWorkerAsync(currentUser.UserName + " connected to server.\n");
+                jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
+                currentUser = JsonConvert.DeserializeObject<User>(jsonFile);
 
                 // Update users list.
                 AddNewUser(stream, currentUser);
@@ -151,11 +163,13 @@ namespace Server
 
                         if (status == 1)
                         {
-                            if (!serverInfo.ActiveUsers.Contains(newUser))
+                            if (!ActiveUsers.Contains(newUser))
                             {
                                 // Add user files to server.
-                                serverInfo.AddUserFiles(newUser, DB);
+                                AddUserFiles(newUser, DB);
+
                                 await stream.WriteAsync(answer, 0, 1);
+
                                 FileRequestHandler();
                             }
                         }
@@ -199,7 +213,7 @@ namespace Server
                         if (searchRequst.FileName.Equals("exit"))
                         {
                             stream.Close();
-                            serverInfo.DeleteUserFiles(currentUser);
+                            DeleteUserFiles(currentUser);
                             DB.LogOffUser(currentUser.UserName);
 
                             foreach (FileDetails file in currentUser.FileList)
@@ -212,17 +226,17 @@ namespace Server
                         }
 
                         while (bw.IsBusy) ;
-                        bw.RunWorkerAsync(currentUser.UserName + " send file request.\n");
+                        bw.RunWorkerAsync("File request received.\n");
 
                         bool fileExistInServer = false;
 
                         // Check if user is active.
-                        if (serverInfo.IsActiveUser(searchRequst.UserName, searchRequst.Password))
+                        if (IsActiveUser(searchRequst.UserName, searchRequst.Password))
                         {
-                            foreach (FileDetails file in serverInfo.ServerFileList.Keys)
+                            foreach (FileDetails file in ServerFileList.Keys)
                             {
                                 // Looking for some or all of the fileName.
-                                if (file.FileName.Contains(searchRequst.FileName) || searchRequst.FileName == "*")
+                                if (file.FileName.Contains(searchRequst.FileName))
                                 {
                                     fileExistInServer = true;
                                     filesSearchResult.Add(CreateTransferFileDetails(file));
@@ -248,7 +262,7 @@ namespace Server
             {
                 TransferFileDetails transferFile = new TransferFileDetails(file.FileName, file.FileSize);
 
-                foreach (User user in serverInfo.ServerFileList[file])
+                foreach (User user in ServerFileList[file])
                     transferFile.PeersList.Add(new Peer(user.Ip, user.UpPort));
 
                 return transferFile;
@@ -270,6 +284,85 @@ namespace Server
                 // Write as json.
                 await stream.WriteAsync(jsonFile, 0, jsonFile.Length);
             }
+
+            // Execute when user Log in.
+            private void AddUserFiles(User user, OperationsDB DB)
+            {
+                lock (thisLock)
+                {
+                    if (!ActiveUsers.Contains(user))
+                        ActiveUsers.Add(user);
+                }
+
+                foreach (FileDetails file in user.FileList)
+                {
+                    if (ServerFileList.ContainsKey(file))
+                    {
+                        // This file already exist in list.
+                        // Add this user as adition peer to download.
+                        lock (thisLock)
+                        {
+                            if (!ServerFileList[file].Contains(user))
+                            {
+                                ServerFileList[file].Add(user);
+                                DB.AddPeerToFile(file.FileName, file.FileSize);
+                            }
+                        }
+                    }
+
+                    else
+                    {
+                        // This file new in list.
+                        lock (thisLock)
+                        {
+                            ServerFileList.Add(file, new List<User>());
+                            ServerFileList[file].Add(user);
+                            DB.AddFile(file.FileName, file.FileSize);
+                        }
+                    }
+                }
+
+                while (bwUpdateUserList.IsBusy) ;
+                bwUpdateUserList.RunWorkerAsync();
+            }
+
+            // Execute when user Log out.
+            private void DeleteUserFiles(User user)
+            {
+                foreach (FileDetails file in user.FileList)
+                {
+                    if (ServerFileList.ContainsKey(file))
+                    {
+                        // File exsits in list.
+                        if (ServerFileList[file].Contains(user))
+                        {
+                            // This user in owner of this file. 
+                            ServerFileList[file].Remove(user);
+
+                            // Delete this file if there is no longer more owners.
+                            if (ServerFileList[file].Count == 0)
+                                ServerFileList.Remove(file);
+                        }
+                    }
+                }
+
+                // Delete user from list if is active.
+                if (ActiveUsers.Contains(user))
+                    ActiveUsers.Remove(user);
+
+                while (bwUpdateUserList.IsBusy) ;
+                bwUpdateUserList.RunWorkerAsync();
+            }
+
+            private bool IsActiveUser(string userName, string password)
+            {
+                foreach (User user in ActiveUsers)
+                {
+                    if (user.UserName.Equals(userName) && user.Password.Equals(password))
+                        return true;
+                }
+                return false;
+            }
         }
 
         private void ServerClose(object sender, CancelEventArgs e)
@@ -278,7 +371,122 @@ namespace Server
             DB.DeleteAllFiles();
 
             serverListener.Stop();
-            serverInfo.Close();
+            //Close();
+        }
+
+
+
+
+
+
+        private void UpdateFileList(User selectedUser)
+        {
+            dataGrid_files.ItemsSource = selectedUser.FileList;
+        }
+
+        private void UpdateUserList()
+        {
+            dataGrid_users.Items.Refresh();
+        }
+
+        private void BwSelect_DoWork(object sender, DoWorkEventArgs e)
+        {
+            selectDelegate selectDel = new selectDelegate(UpdateFileList);
+            dataGrid_files.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, selectDel, (User)e.Argument);
+        }
+
+        private void BwUpdate_DoWork(object sender, DoWorkEventArgs e)
+        {
+            updateDelegate updateDel = new updateDelegate(UpdateUserList);
+            dataGrid_users.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, updateDel);
+        }
+
+        // Execute when user Log in.
+        private void AddUserFiles(User user, OperationsDB DB)
+        {
+            lock (thisLock)
+            {
+                if (!ActiveUsers.Contains(user))
+                    ActiveUsers.Add(user);
+            }
+
+            foreach (FileDetails file in user.FileList)
+            {
+                if (ServerFileList.ContainsKey(file))
+                {
+                    // This file already exist in list.
+                    // Add this user as adition peer to download.
+                    lock (thisLock)
+                    {
+                        if (!ServerFileList[file].Contains(user))
+                        {
+                            ServerFileList[file].Add(user);
+                            DB.AddPeerToFile(file.FileName, file.FileSize);
+                        }
+                    }
+                }
+
+                else
+                {
+                    // This file new in list.
+                    lock (thisLock)
+                    {
+                        ServerFileList.Add(file, new List<User>());
+                        ServerFileList[file].Add(user);
+                        DB.AddFile(file.FileName, file.FileSize);
+                    }
+                }
+            }
+
+            while (bwUpdateUserList.IsBusy) ;
+            bwUpdateUserList.RunWorkerAsync();
+        }
+
+        // Execute when user Log out.
+        private void DeleteUserFiles(User user)
+        {
+            foreach (FileDetails file in user.FileList)
+            {
+                if (ServerFileList.ContainsKey(file))
+                {
+                    // File exsits in list.
+                    if (ServerFileList[file].Contains(user))
+                    {
+                        // This user in owner of this file. 
+                        ServerFileList[file].Remove(user);
+
+                        // Delete this file if there is no longer more owners.
+                        if (ServerFileList[file].Count == 0)
+                            ServerFileList.Remove(file);
+                    }
+                }
+            }
+
+            // Delete user from list if is active.
+            if (ActiveUsers.Contains(user))
+                ActiveUsers.Remove(user);
+
+            while (bwUpdateUserList.IsBusy) ;
+            bwUpdateUserList.RunWorkerAsync();
+        }
+
+        private bool IsActiveUser(string userName, string password)
+        {
+            foreach (User user in ActiveUsers)
+            {
+                if (user.UserName.Equals(userName) && user.Password.Equals(password))
+                    return true;
+            }
+            return false;
+        }
+
+        private void DataGrid_users_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0)
+                bwUpdateFileList.RunWorkerAsync(e.AddedItems[0]);
+
+            else
+                dataGrid_files.ItemsSource = null;
         }
     }
 }

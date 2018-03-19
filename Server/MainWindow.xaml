@@ -5,13 +5,37 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Server"
         mc:Ignorable="d"
-        Title="MainWindow" 
-        Height="350" Width="525" 
+        Title="Server Information" 
+        Height="700" Width="500" 
         Closing="ServerClose" 
         WindowStartupLocation="Manual"
-        Left="50" Top="470"
+        Left="90" Top="20"
         >
     <Grid>
-        <TextBox x:Name="TextBox_serverLog" HorizontalAlignment="Left" Height="278" Margin="20" TextWrapping="Wrap" VerticalAlignment="Top" Width="476" VerticalScrollBarVisibility="Auto" IsReadOnly="True"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="2*"/>
+        </Grid.RowDefinitions>
+
+        <GroupBox Header="Log" Grid.Row="0">
+            <TextBox x:Name="TextBox_serverLog" TextWrapping="Wrap" IsReadOnly="True"/>
+        </GroupBox>
+
+        <GroupBox Header="Users and Files" Grid.Row="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
+
+                <DataGrid x:Name="dataGrid_users" Grid.Column="0" AutoGenerateColumns="False" SelectionChanged="DataGrid_users_SelectionChanged">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Binding="{Binding UserName}" ClipboardContentBinding="{x:Null}" Header="UserName" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <DataGrid x:Name="dataGrid_files" Grid.Column="1"/>
+
+            </Grid>
+        </GroupBox>
     </Grid>
 </Window>

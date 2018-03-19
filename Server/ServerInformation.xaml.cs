@@ -39,9 +39,7 @@ namespace Server
 
         private void UpdateFileList(User selectedUser)
         {
-            //dataGrid_files.Items.Refresh();
             dataGrid_files.ItemsSource = selectedUser.FileList;
-            dataGrid_files.Columns.RemoveAt(1);
         }
 
         private void UpdateUserList()
@@ -72,7 +70,7 @@ namespace Server
 
             foreach (FileDetails file in user.FileList)
             {
-                if (ServerFileList.ContainsKey(file)) 
+                if (ServerFileList.ContainsKey(file))
                 {
                     // This file already exist in list.
                     // Add this user as adition peer to download.
@@ -103,11 +101,11 @@ namespace Server
         }
 
         // Execute when user Log out.
-        public void DeleteUserFiles(User user) 
+        public void DeleteUserFiles(User user)
         {
             foreach (FileDetails file in user.FileList)
             {
-                if (ServerFileList.ContainsKey(file)) 
+                if (ServerFileList.ContainsKey(file))
                 {
                     // File exsits in list.
                     if (ServerFileList[file].Contains(user))
