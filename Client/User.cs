@@ -27,15 +27,15 @@ namespace MiniTorrent
             FileList = new List<FileDetails>();
         }
 
-        //public User(string userName, string password, string ip, int upPort, int downPort)
-        //{
-        //    this.UserName = userName;
-        //    this.Password = password;
-        //    this.Ip = ip;
-        //    this.UpPort = upPort;
-        //    this.DownPort = downPort;
-        //    FileList = new List<FileDetails>();
-        //}
+        public User(string userName, string password, string ip, int upPort, int downPort)
+        {
+            this.UserName = userName;
+            this.Password = password;
+            this.Ip = ip;
+            this.UpPort = upPort;
+            this.DownPort = downPort;
+            FileList = new List<FileDetails>();
+        }
 
         public bool Equals(User other)
         {

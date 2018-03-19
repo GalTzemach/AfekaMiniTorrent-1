@@ -16,7 +16,7 @@ namespace MiniTorrent
             this.fileName = fileName;
         }
 
-        public User ReadUserFromXml()
+        public User[] ReadUserFromXml()
         {
             string userName = "";
             string password = "";
@@ -27,7 +27,7 @@ namespace MiniTorrent
             int downPort = 0;
             string fileName = "";
             long fileSize = 0;
-            User user = null;
+            User[] users = new User[2];
 
             this.xmlReader = new XmlTextReader(this.fileName);
 
@@ -107,7 +107,9 @@ namespace MiniTorrent
                                 xmlReader.Close();
                                 return null;
                             }
-                            user = new User(userName, password, uploadPath, downloadPath, ip, upPort, downPort);
+
+                            users[0] = new User(userName, password, uploadPath, downloadPath, ip, upPort, downPort);
+                            users[1] = new User(userName, password, ip, upPort, downPort);
                             break;
 
                         case "FileName":
@@ -120,14 +122,15 @@ namespace MiniTorrent
                             if (File.Exists(uploadPath + "\\" + fileName))
                             {
                                 fileSize = Convert.ToInt64(xmlReader.Value);
-                                user.FileList.Add(new FileDetails(fileName, fileSize));
+                                users[0].FileList.Add(new FileDetails(fileName, fileSize));
+                                users[1].FileList.Add(new FileDetails(fileName, fileSize));
                             }
                             break;
                     }
                 }
             }
             xmlReader.Close();
-            return user;
+            return users;
         }
 
         public void WriteUserToXml(User currentUser, Dictionary<string, long> files)

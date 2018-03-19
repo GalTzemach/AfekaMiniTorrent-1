@@ -20,6 +20,10 @@ namespace MiniTorrent
     {
         private const int BUFFER_SIZE = 50000;
 
+        // FileNotFoundLabel
+        private string emptyFields = "Search field is empty";
+        private string fileNotFound = "File not found";
+
         private NetworkStream stream;
         private static User currentUser;
 
@@ -32,6 +36,11 @@ namespace MiniTorrent
 
         private static object thisLock;
         private static bool isActiveUser;
+
+        private List<TransferFileDetails> transferFileList;
+
+        private TransferFileDetails TransferFileDetails { get; set; }
+
 
         public UserControlPanel(NetworkStream stream, List<FileStatus> uploadFiles, User currentUser)
         {
@@ -53,6 +62,8 @@ namespace MiniTorrent
             bwProgressBarUpdate.DoWork += BwProgressBarUpdate_DoWork;
             bwReflactionButton.DoWork += BwReflactionButton_DoWork;
 
+            Title = currentUser.UserName;
+
             CheckForReflactionFile();
             StartListeningForFileReq();
         }
@@ -60,7 +71,7 @@ namespace MiniTorrent
         // Check if exist reflaction.dll file.
         public void CheckForReflactionFile()
         {
-            if (File.Exists(currentUser.DownloadPath + "\\reflection.dll"))
+            if (File.Exists(currentUser.DownloadPath + "\\MyReflection.dll"))
             {
                 while (bwReflactionButton.IsBusy) ;
                 bwReflactionButton.RunWorkerAsync();
@@ -259,14 +270,18 @@ namespace MiniTorrent
         // This class handle file downloads.
         public class DownloadFileHandler
         {
+            //private string fileName;
+            //private long fileSize;
+            //private int numOfPeers;
+
             private AutoResetEvent[] autoResetEvents;
             private TransferFileDetails transferFileDetails;
             private DataGrid downloadDataGrid;
             private Stopwatch stopWatch;
             private FileStream fileStream;
             private FileInfo fileInfo;
+            //private NetworkStream stream;
 
-            private long totalCompleted;
             private int bytesPerPeer;
             private bool isValidFile = true;
 
@@ -274,6 +289,10 @@ namespace MiniTorrent
             {
                 this.transferFileDetails = transferFileDetails;
                 this.downloadDataGrid = downloadDataGrid;
+
+                //this.fileName = transferFileDetails.FileName;
+                //this.fileSize = transferFileDetails.FileSize;
+                //this.numOfPeers = transferFileDetails.NumOfPeers;
 
                 bytesPerPeer = (int)this.transferFileDetails.FileSize / this.transferFileDetails.NumOfPeers;
 
@@ -397,7 +416,6 @@ namespace MiniTorrent
 
                         lock (thisLock)
                         {
-                            totalCompleted += AmountOfByteRead;
                             fileStream.Seek(currentPos, 0);
                             fileStream.Write(buffer, 0, (int)AmountOfByteRead);
                         }
@@ -407,7 +425,7 @@ namespace MiniTorrent
 
                         lock (thisLock)
                         {
-                            double percentCompleted = ((double)totalCompleted / transferFileDetails.FileSize) * 100;
+                            double percentCompleted = ((double)totalBytesRead / transferFileDetails.FileSize) * 100;
                             fileStatus.PercentCompleted = Convert.ToInt32(percentCompleted);
                             while (bwProgressBarUpdate.IsBusy) ;
                             bwProgressBarUpdate.RunWorkerAsync();
@@ -451,8 +469,7 @@ namespace MiniTorrent
                         timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
 
                     fileStatus.TotaTime = elapsedTime;
-                    // BitRate in Mbps = mega bit per second.
-                    fileStatus.BitRate = (fileStatus.FileSize / 1024 / 1024) / timeSpan.TotalSeconds * 8;
+                    fileStatus.BitRate = fileStatus.FileSize / timeSpan.Milliseconds;
                     fileStatus.Status = "Download completed";
 
                     fileStream.Close();
@@ -508,8 +525,11 @@ namespace MiniTorrent
 
         private void Btn_reflection_Click(object sender, RoutedEventArgs e)
         {
-            EnterNumbersMsg enterNumbers = new EnterNumbersMsg(currentUser.DownloadPath);
-            enterNumbers.ShowDialog();
+            //EnterNumbersMsg enterNumbers = new EnterNumbersMsg(currentUser.DownloadPath);
+            //enterNumbers.ShowDialog();
+
+            string reflectionMessage = HandleReflection.GetAuthors(currentUser.DownloadPath);
+            MessageBox.Show(reflectionMessage);
         }
 
         private void Btn_LogOut_Click(object sender, RoutedEventArgs e)
@@ -519,6 +539,122 @@ namespace MiniTorrent
 
             MainWindow m = new MainWindow();
             this.Close();
+        }
+
+        private void Btn_search_Click(object sender, RoutedEventArgs e)
+        {
+            string fileName = fileNameTextBox.Text.Trim();
+
+            DownloadButton.Visibility = Visibility.Hidden;
+
+            if (string.IsNullOrEmpty(fileName.Trim()))
+            {
+                SearchStatusLabel.Content = emptyFields;
+                SearchStatusLabel.Visibility = Visibility.Visible;
+
+                ///G
+                transferFileList = new List<TransferFileDetails>();
+                dataGrid.ItemsSource = transferFileList;
+                DownloadButton.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                SearchStatusLabel.Visibility = Visibility.Hidden;
+                SendSearchFileRequest(fileName);
+                DownloadButton.Visibility = Visibility.Hidden;
+            }
+        }
+
+        public async void SendSearchFileRequest(string fileName)
+        {
+            ClientSearchReq clientSearchRequest = new ClientSearchReq(fileName, currentUser.UserName, currentUser.Password);
+
+            string jsonString = JsonConvert.SerializeObject(clientSearchRequest);
+            byte[] jsonBytes = ASCIIEncoding.ASCII.GetBytes(jsonString);
+            byte[] jsonSize = BitConverter.GetBytes(jsonBytes.Length);
+
+            // Write size.
+            await stream.WriteAsync(jsonSize, 0, jsonSize.Length);
+
+            // Write ClientSearchReq as json to server.
+            await stream.WriteAsync(jsonBytes, 0, jsonBytes.Length);
+
+            byte[] answer = new byte[1];
+
+            // Read answer from server.
+            await stream.ReadAsync(answer, 0, 1);
+
+            if (answer[0] == 0)
+            {
+                // Error.
+                SearchStatusLabel.Content = fileNotFound;
+                SearchStatusLabel.Visibility = Visibility.Visible;
+                
+                ///G
+                DownloadButton.Visibility = Visibility.Hidden;
+                transferFileList = new List<TransferFileDetails>();
+                dataGrid.ItemsSource = transferFileList;
+                DownloadButton.Visibility = Visibility.Hidden;
+                return;
+            }
+
+            else
+            {
+                // Success.
+                SearchStatusLabel.Visibility = Visibility.Hidden;
+                GetResponseFromServer();
+            }
+        }
+
+        public async void GetResponseFromServer()
+        {
+            string jsonString;
+            byte[] jsonBytes;
+            byte[] jsonSize = new byte[4]; // int32
+
+            // Read size.
+            await stream.ReadAsync(jsonSize, 0, 4);
+            jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
+
+            // Read List<TransferFileDetails> as json.
+            await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
+            jsonString = ASCIIEncoding.ASCII.GetString(jsonBytes);
+
+            // Convert json to List<TransferFileDetails>.
+            transferFileList = new List<TransferFileDetails>();
+            transferFileList = JsonConvert.DeserializeObject<List<TransferFileDetails>>(jsonString);
+            dataGrid.ItemsSource = transferFileList;
+        }
+
+        private void DownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            TransferFileDetails = (TransferFileDetails)dataGrid.SelectedItem;
+
+            if (TransferFileDetails != null)
+            {
+                //TransferFileDetails transferFileDetails = TransferFileDetails;///G
+                downloadFiles.Add(new FileStatus(TransferFileDetails.FileName, TransferFileDetails.FileSize, "Downloading.."));
+
+                UpdateDataGrid();
+
+                DownloadFileHandler downloadFile = new DownloadFileHandler(TransferFileDetails, download_DataGrid);
+            }
+        }
+
+        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            DownloadButton.Visibility = Visibility.Visible;
+        }
+
+        private void dataGrid_LostFocus(object sender, RoutedEventArgs e)
+        {
+            //DownloadButton.Visibility = Visibility.Hidden;
+        }
+
+        private void dataGrid_GotFocus(object sender, RoutedEventArgs e)
+        {
+            DownloadButton.Visibility = Visibility.Visible;
+
         }
     }
 }

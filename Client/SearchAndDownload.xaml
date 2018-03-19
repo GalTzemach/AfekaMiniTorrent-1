@@ -11,8 +11,8 @@
         <TextBox x:Name="fileNameTextBox" HorizontalAlignment="Left" Height="23" Margin="22,41,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="320"/>
         <Button x:Name="SearchButton" Content="Search" HorizontalAlignment="Left" Margin="365,42,0,0" VerticalAlignment="Top" Width="75" Click="Btn_search_Click"/>
         <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="11" Margin="0,80,0,0" VerticalAlignment="Top" Width="428"/>
-        <Label x:Name="SearchStatusLabel" Content="File not found" HorizontalAlignment="Left" Margin="10,96,0,0" VerticalAlignment="Top" FontWeight="Bold" Foreground="#FFE00B0B" Visibility="Hidden"/>
-        <Button x:Name="DownloadButton" Content="Download" HorizontalAlignment="Left" Margin="366,148,0,0" VerticalAlignment="Top" Width="75" Click="DownloadButton_Click" Visibility="Hidden"/>
+        <Label x:Name="SearchStatusLabel" Content="File not found" HorizontalAlignment="Left" Margin="10,96,0,0" VerticalAlignment="Top" FontWeight="Bold" Foreground="#FFE00B0B" Visibility="Visible"/>
+        <Button x:Name="DownloadButton" Content="Download" HorizontalAlignment="Left" Margin="366,148,0,0" VerticalAlignment="Top" Width="75" Click="DownloadButton_Click" Visibility="Visible"/>
         <DataGrid x:Name="dataGrid" HorizontalAlignment="Left" Height="118" Margin="22,122,0,0" VerticalAlignment="Top" Width="320" AutoGenerateColumns="False" SelectionChanged="DataGrid_SelectionChanged" SelectionMode="Single">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding FileName}" ClipboardContentBinding="{x:Null}" Header="File Name" IsReadOnly="True" MinWidth="200"/>

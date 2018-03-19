@@ -20,6 +20,7 @@ namespace MiniTorrent
         public TransferFileDetails TransferFileDetails { get; set; }
 
         private List<TransferFileDetails> transferFileList;
+
         private User currentUser;
         private NetworkStream stream;
 

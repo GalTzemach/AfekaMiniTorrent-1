@@ -21,6 +21,26 @@ namespace MiniTorrent
             this.fileSize = fileSize;
             this.peerList = new List<Peer>();
         }
+
+        //[JsonConstructor]
+        //public TransferFileDetails(TransferFileDetails other)
+        //{
+        //    this.fileName = other.fileName;
+        //    this.fileSize = other.fileSize;
+        //    this.peerList = other.peerList;
+        //}
+
+        //public string FileName { get; set; }
+        //public long FileSize { get; set; }
+        //public List<Peer> PeerList { get; set; }
+        //public int NumOfPeers { get { return PeerList.Count; } }
+
+        //public TransferFileDetails(string fileName, long fileSize, List<Peer> peerList)
+        //{
+        //    this.FileName = fileName;
+        //    this.FileSize = fileSize;
+        //    this.PeerList = peerList;
+        //}
     }
 
     public class Peer
@@ -36,5 +56,14 @@ namespace MiniTorrent
             this.ip = ip;
             this.port = port;
         }
+
+        //public string Ip { get; set; }
+        //public int Port { get; set; }
+
+        //public Peer(string ip, int port)
+        //{
+        //    this.Ip = ip;
+        //    this.Port = port;
+        //}
     }
 }

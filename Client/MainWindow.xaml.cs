@@ -63,22 +63,14 @@ namespace MiniTorrent
             Process.Start("http://localhost:62053/CreateNewUser.aspx");
         }
 
-        private void SignIn_Click(object sender, RoutedEventArgs e)
-        {
-            if (CheckFields())
-            {
-                BuildXmlFile();
-                SendUserAsJsonToServer();
-            }
-        }
-
         public bool CheckFields()
         {
             // Ckeck empty fields.
-            if (string.IsNullOrEmpty(userName.Text.Trim()) ||
-                string.IsNullOrEmpty(password.Text.Trim()) ||
-                string.IsNullOrEmpty(uploadPath.Text.Trim()) ||
-                string.IsNullOrEmpty(downloadPath.Text.Trim()))
+            if (string.IsNullOrEmpty(user_name_TextBox.Text.Trim()) ||
+                
+                string.IsNullOrEmpty(password_PasswordBox.Password.Trim()) ||
+                string.IsNullOrEmpty(upload_folder_TextBox.Text.Trim()) ||
+                string.IsNullOrEmpty(download_folder_TextBox.Text.Trim()))
             {
                 errorLabel.Content = emptyFields;
                 errorLabel.Visibility = Visibility.Visible;
@@ -86,8 +78,8 @@ namespace MiniTorrent
             }
 
             // Check if directories are exist.
-            if (!Directory.Exists(uploadPath.Text.Trim()) ||
-                     !Directory.Exists(downloadPath.Text.Trim()))
+            if (!Directory.Exists(upload_folder_TextBox.Text.Trim()) ||
+                     !Directory.Exists(download_folder_TextBox.Text.Trim()))
             {
                 errorLabel.Content = incorrectPath;
                 errorLabel.Visibility = Visibility.Visible;
@@ -101,10 +93,10 @@ namespace MiniTorrent
 
         public void BuildXmlFile()
         {
-            string userName = this.userName.Text.Trim();
-            string password = this.password.Text.Trim();
-            string upload = uploadPath.Text.Trim();
-            string download = downloadPath.Text.Trim();
+            string userName = this.user_name_TextBox.Text.Trim();
+            string password = this.password_PasswordBox.Password.Trim();
+            string upload = upload_folder_TextBox.Text.Trim();
+            string download = download_folder_TextBox.Text.Trim();
 
             XmlWriterSettings settings = new XmlWriterSettings
             {
@@ -153,7 +145,7 @@ namespace MiniTorrent
 
         public void AddUserFilesToXml(XmlWriter writer)
         {
-            Dictionary<string, long> files = GetAllFiles(uploadPath.Text.Trim());
+            Dictionary<string, long> files = GetAllFiles(upload_folder_TextBox.Text.Trim());
 
             foreach (string key in files.Keys)
             {
@@ -208,7 +200,8 @@ namespace MiniTorrent
         {
             try
             {
-                User users = xmlHandler.ReadUserFromXml();
+                User[] users = new User[2];
+                users = xmlHandler.ReadUserFromXml();
 
                 if (users != null)
                 {
@@ -217,7 +210,7 @@ namespace MiniTorrent
                         UpdateFileList(users);
                     }
 
-                    currentUser = users;
+                    currentUser = users[0];
 
                     TcpClient client = new TcpClient();
 
@@ -226,7 +219,7 @@ namespace MiniTorrent
                     stream = client.GetStream();
 
                     // Convert user object to json before send.
-                    string jsonString = JsonConvert.SerializeObject(users);
+                    string jsonString = JsonConvert.SerializeObject(users[1]);
 
                     byte[] jsonByte = ASCIIEncoding.ASCII.GetBytes(jsonString);
                     byte[] jsonSize = BitConverter.GetBytes(jsonByte.Length);
@@ -252,18 +245,20 @@ namespace MiniTorrent
         }
 
         // When Login with config file, check for file changes in specific path.
-        private void UpdateFileList(User user)
+        private void UpdateFileList(User[] users)
         {
-            Dictionary<string, long> files = GetAllFiles(user.UploadPath);
-            user.FileList.Clear();
+            Dictionary<string, long> files = GetAllFiles(users[0].UploadPath);
+            users[0].FileList.Clear();
+            users[1].FileList.Clear();
 
             foreach (String file in files.Keys)
             {
                 FileDetails tempFile = new FileDetails(file, files[file]);
-                user.FileList.Add(tempFile);
+                users[0].FileList.Add(tempFile);
+                users[1].FileList.Add(tempFile);
             }
 
-            xmlHandler.WriteUserToXml(user, files);
+            xmlHandler.WriteUserToXml(users[0], files);
         }
 
         // Handle server response to Login request.
@@ -313,29 +308,61 @@ namespace MiniTorrent
         // Because pc can have multiply ip addresses.
         public string GetCorrectIPAddress()
         {
-            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            List<string> IPList = new List<string>();
+
+            var hosts = Dns.GetHostEntry(Dns.GetHostName());
+
+            foreach (var ip in hosts.AddressList)
             {
-                socket.Connect("8.8.8.8", 65530);
-                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
-                return endPoint.Address.ToString();
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    IPList.Add(ip.ToString());
+            }
+
+            if (IPList.Count == 1)
+                return IPList[0];
+
+            else
+            {
+                ChooseIPAddress chooseIP = new ChooseIPAddress(IPList);
+                chooseIP.ShowDialog();
+                return chooseIP.selectedIP;
             }
         }
 
-        private void UploadPath_Click(object sender, RoutedEventArgs e)
+
+        private void upload_Button_Click(object sender, RoutedEventArgs e)
         {
             using (var uploadFolderDialog = new System.Windows.Forms.FolderBrowserDialog())
             {
                 uploadFolderDialog.ShowDialog();
-                uploadPath.Text = uploadFolderDialog.SelectedPath;
+                upload_folder_TextBox.Text = uploadFolderDialog.SelectedPath;
             }
         }
 
-        private void DownloadPath_Click(object sender, RoutedEventArgs e)
+        private void sign_in_Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (CheckFields())
+            {
+                BuildXmlFile();
+                SendUserAsJsonToServer();
+            }
+        }
+
+        private void reset_Button_Click(object sender, RoutedEventArgs e)
+        {
+            user_name_TextBox.Clear();
+            password_PasswordBox.Clear();
+            ip_TextBox.Clear();
+            upload_folder_TextBox.Clear();
+            download_folder_TextBox.Clear();
+        }
+
+        private void download_Button_Click(object sender, RoutedEventArgs e)
         {
             using (var downloadFolderDialog = new System.Windows.Forms.FolderBrowserDialog())
             {
                 downloadFolderDialog.ShowDialog();
-                downloadPath.Text = downloadFolderDialog.SelectedPath;
+                download_folder_TextBox.Text = downloadFolderDialog.SelectedPath;
             }
         }
     }
