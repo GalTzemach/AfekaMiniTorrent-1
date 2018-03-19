@@ -32,6 +32,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{C5E79369-15F4-4898-9E1B-34EBBD14606B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyReflection", "MyReflection\MyReflection.csproj", "{D51F32AB-1B8B-406E-BD22-A0CEEEA3C44A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,10 @@ Global
 		{C5E79369-15F4-4898-9E1B-34EBBD14606B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5E79369-15F4-4898-9E1B-34EBBD14606B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5E79369-15F4-4898-9E1B-34EBBD14606B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D51F32AB-1B8B-406E-BD22-A0CEEEA3C44A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D51F32AB-1B8B-406E-BD22-A0CEEEA3C44A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D51F32AB-1B8B-406E-BD22-A0CEEEA3C44A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D51F32AB-1B8B-406E-BD22-A0CEEEA3C44A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
