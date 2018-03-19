@@ -108,7 +108,6 @@ namespace MiniTorrent
                                 return null;
                             }
                             user = new User(userName, password, uploadPath, downloadPath, ip, upPort, downPort);
-                            //user[1] = new User(userName, password, ip, upPort, downPort);
                             break;
 
                         case "FileName":
@@ -122,7 +121,6 @@ namespace MiniTorrent
                             {
                                 fileSize = Convert.ToInt64(xmlReader.Value);
                                 user.FileList.Add(new FileDetails(fileName, fileSize));
-                                //user[1].FileList.Add(new FileDetails(fileName, fileSize));
                             }
                             break;
                     }

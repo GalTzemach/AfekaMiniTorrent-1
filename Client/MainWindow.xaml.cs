@@ -208,7 +208,6 @@ namespace MiniTorrent
         {
             try
             {
-                //User users;
                 User users = xmlHandler.ReadUserFromXml();
 
                 if (users != null)
