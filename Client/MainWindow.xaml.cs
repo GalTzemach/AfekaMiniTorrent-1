@@ -256,7 +256,7 @@ namespace MiniTorrent
         {
             Dictionary<string, long> files = GetAllFiles(user.UploadPath);
             user.FileList.Clear();
-            
+
             foreach (String file in files.Keys)
             {
                 FileDetails tempFile = new FileDetails(file, files[file]);
@@ -313,24 +313,11 @@ namespace MiniTorrent
         // Because pc can have multiply ip addresses.
         public string GetCorrectIPAddress()
         {
-            List<string> IPList = new List<string>();
-
-            var hosts = Dns.GetHostEntry(Dns.GetHostName());
-
-            foreach (var ip in hosts.AddressList)
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
             {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                    IPList.Add(ip.ToString());
-            }
-
-            if (IPList.Count == 1)
-                return IPList[0];
-
-            else
-            {
-                ChooseIPAddress chooseIP = new ChooseIPAddress(IPList);
-                chooseIP.ShowDialog();
-                return chooseIP.selectedIP;
+                socket.Connect("8.8.8.8", 65530);
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                return endPoint.Address.ToString();
             }
         }
 

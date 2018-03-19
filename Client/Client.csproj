@@ -72,9 +72,6 @@
     </Compile>
     <Compile Include="FileDetails.cs" />
     <Compile Include="FilesAndStatus.cs" />
-    <Compile Include="IpMsgBox.xaml.cs">
-      <DependentUpon>IpMsgBox.xaml</DependentUpon>
-    </Compile>
     <Compile Include="TransferFileDetails.cs" />
     <Compile Include="SearchAndDownload.xaml.cs">
       <DependentUpon>SearchAndDownload.xaml</DependentUpon>
@@ -85,10 +82,6 @@
     <Compile Include="User.cs" />
     <Compile Include="XmlHandler.cs" />
     <Page Include="enterNumbersMsg.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="IpMsgBox.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
