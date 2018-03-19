@@ -213,7 +213,7 @@ namespace Server
 
                         // Convert to SearchRequest object from Json.
                         jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
-                        ClientSearchReq searchRequst = JsonConvert.DeserializeObject<ClientSearchReq>(jsonFile);
+                        SearchRequest searchRequst = JsonConvert.DeserializeObject<SearchRequest>(jsonFile);
 
                         // Execute when user press X on his window.
                         if (searchRequst.FileName.Equals("exit"))

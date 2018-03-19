@@ -38,9 +38,9 @@
                             <ColumnDefinition Width="0.2*"/>
                         </Grid.ColumnDefinitions>
                         <!--<TextBox Grid.Column="0" Height="23"/>-->
-                        <TextBox x:Name="fileNameTextBox" Grid.Column="0" Height="23"/>
+                        <TextBox x:Name="fileNameTextBox" Grid.Column="0" Height="23" KeyDown="fileNameTextBox_KeyDown"/>
                         <!--<Button Content="Search" Grid.Column="1" Height="23"/>-->
-                        <Button x:Name="SearchButton" Content="Search" Click="Btn_search_Click" Grid.ColumnSpan="2" Margin="307,0,0,0.2" RenderTransformOrigin="0.501,0.5"/>
+                        <Button x:Name="SearchButton" Content="Search" Click="Btn_search_Click" Grid.ColumnSpan="2" Margin="307,0,0,0" RenderTransformOrigin="0.501,0.5" Height="23" VerticalAlignment="Top"/>
                     </Grid>
 
                     <Label x:Name="SearchStatusLabel" Content="File not found" Grid.Row="1" FontWeight="Bold" Foreground="#FFE00B0B" Visibility="Hidden"/>

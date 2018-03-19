@@ -33,7 +33,7 @@
                         <DataGridTextColumn Binding="{Binding UserName}" ClipboardContentBinding="{x:Null}" Header="UserName" Width="*"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <DataGrid x:Name="dataGrid_files" Grid.Column="1"/>
+                <DataGrid x:Name="dataGrid_files" Grid.Column="2"/>
 
             </Grid>
         </GroupBox>

@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:MiniTorrent"
              StartupUri="Windows/SignIn.xaml">
-    
+
     <Application.Resources>
         <Style x:Key="commonStyle"
            TargetType="Control">
@@ -23,5 +23,5 @@
            BasedOn="{StaticResource commonStyle}">
         </Style>
     </Application.Resources>
-    
+
 </Application>

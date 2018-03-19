@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace MiniTorrent
 {
@@ -641,6 +642,14 @@ namespace MiniTorrent
         {
             DownloadButton.Visibility = Visibility.Visible;
 
+        }
+
+        private void fileNameTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Return)
+            {
+                Btn_search_Click(null, null);
+            }
         }
     }
 }

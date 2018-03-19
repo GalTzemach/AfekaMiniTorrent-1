@@ -57,7 +57,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Classes\ClientSearchReq.cs" />
+    <Compile Include="Classes\SearchRequest.cs" />
     <Compile Include="Classes\FileDetails.cs" />
     <Compile Include="Classes\TransferFileDetails.cs" />
     <Compile Include="Classes\Users.cs" />
