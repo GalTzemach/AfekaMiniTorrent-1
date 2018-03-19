@@ -234,9 +234,6 @@ namespace Server
                         while (bw.IsBusy) ;
                         bw.RunWorkerAsync(currentUser.UserName + " send file request.\n");
 
-                        while (bw.IsBusy) ;
-                        bw.RunWorkerAsync("File request received.\n");
-
                         bool fileExistInServer = false;
 
                         // Check if user is active.
@@ -245,7 +242,7 @@ namespace Server
                             foreach (FileDetails file in ServerFileList.Keys)
                             {
                                 // Looking for some or all of the fileName.
-                                if (file.FileName.Contains(searchRequst.FileName))
+                                if (file.FileName.Contains(searchRequst.FileName) || searchRequst.FileName == "*")
                                 {
                                     fileExistInServer = true;
                                     filesSearchResult.Add(CreateTransferFileDetails(file));

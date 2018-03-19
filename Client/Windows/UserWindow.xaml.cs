@@ -19,6 +19,7 @@ namespace MiniTorrent
     public partial class UserControlPanel : Window
     {
         private const int BUFFER_SIZE = 50000;
+        private const string REFLECTION_DLL_FILE_NAME = "MyReflection.dll";
 
         // FileNotFoundLabel
         private string emptyFields = "Search field is empty";
@@ -71,7 +72,7 @@ namespace MiniTorrent
         // Check if exist reflaction.dll file.
         public void CheckForReflactionFile()
         {
-            if (File.Exists(currentUser.DownloadPath + "\\MyReflection.dll"))
+            if (File.Exists(currentUser.DownloadPath + "\\" + REFLECTION_DLL_FILE_NAME))
             {
                 while (bwReflactionButton.IsBusy) ;
                 bwReflactionButton.RunWorkerAsync();
@@ -454,13 +455,13 @@ namespace MiniTorrent
                         timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
 
                     fileStatus.TotaTime = elapsedTime;
-                    fileStatus.BitRate = fileStatus.FileSize / timeSpan.Milliseconds;
+                    fileStatus.BitRate = (fileStatus.FileSize / 1024 / 1024 * 8) / timeSpan.TotalSeconds;
                     fileStatus.Status = "Download completed";
 
                     fileStream.Close();
 
                     // Visible reflection button if needed.
-                    if (transferFileDetails.FileName.Trim().Equals("reflection.dll"))
+                    if (transferFileDetails.FileName.Trim().Equals(REFLECTION_DLL_FILE_NAME))
                     {
                         while (bwReflactionButton.IsBusy) ;
                         bwReflactionButton.RunWorkerAsync();
