@@ -107,6 +107,8 @@ namespace MiniTorrent
                                 xmlReader.Close();
                                 return null;
                             }
+
+                            // Create use object.
                             user = new User(userName, password, uploadPath, downloadPath, ip, upPort, downPort);
                             break;
 

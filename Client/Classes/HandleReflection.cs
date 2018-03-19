@@ -14,11 +14,11 @@ namespace MiniTorrent
             try
             {
                 // Loading assembly from dll file.
-                assembly = Assembly.LoadFrom(downloadPath + "\\MyReflection.dll");
+                assembly = Assembly.LoadFrom(downloadPath + "\\" + UserWindow.REFLECTION_DLL_FILE_NAME);
 
                 // Check if loading failed.
                 if (assembly == null)
-                    return "MyReflection.dll file not found";
+                    return UserWindow.REFLECTION_DLL_FILE_NAME + " file not found";
 
                 // Getting Author type for use below.
                 Type op = assembly.GetType("MyReflection.Author");

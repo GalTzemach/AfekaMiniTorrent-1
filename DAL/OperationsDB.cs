@@ -65,22 +65,11 @@ namespace DAL
                         select file;
 
             DB.Files.DeleteAllOnSubmit(files);
+
             lock (thisLock)
             {
                 DB.SubmitChanges();
             }
-
-            //if (files.Count() != 0)
-            //{
-            //    foreach (File f in files)
-            //    {
-            //        DB.Files.DeleteOnSubmit(f);
-            //    }
-            //    lock (thisLock)
-            //    {
-            //        DB.SubmitChanges();
-            //    }
-            //}
         }
 
         public void AddUser(string userName, string password)
@@ -109,30 +98,6 @@ namespace DAL
                              select user).Count();
 
             return userExist != 0;
-        }
-
-        public DataSet1 SearchFileName(string fileName)
-        {
-            if (String.IsNullOrEmpty(fileName))
-            {
-                return null;
-            }
-
-            else
-            {
-                try
-                {
-                    DataSet1TableAdapters.FileTableAdapter adapter = new DataSet1TableAdapters.FileTableAdapter();
-                    DataSet1 dataSet = new DataSet1();
-                    adapter.FillBy(dataSet.File, fileName);
-                    return dataSet;
-                }
-
-                catch
-                {
-                    return null;
-                }
-            }
         }
 
         public int GetUserStatus(string userName, string password)

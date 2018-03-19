@@ -16,42 +16,44 @@ namespace MiniTorrent
     /// </summary>
     public partial class MainWindow : Window
     {
-        // Error massegeges.
-        private string emptyFields = "All the fields have to be filled";
-        private string userNotExist = "Username or password are incorrect";
-        private string incorrectPath = "the upload/download path is incorrect";
-        private string userAlreadyConnected = "The username is alredy signed in";
-        private string userDisable = "The username is blocked";
-        private string IncorrectConfigFile = "The ConfigFile is incorrect or not exist";
-
+        // Server information.
         private const string SERVER_IP = "192.168.1.156";
-        private const string CONFIG_FILE_NAME = "MyConfig.xml";
-        private const int UP_PORT = 8005;
         private const int SERVER_PORT = 8006;
 
-        private NetworkStream stream;
+        private const string CONFIG_FILE_NAME = "MyConfig.xml";
+        private const int UP_PORT = 8005;
+
+        // Error massegeges.
+        private string emptyFields = "There is empty fields";
+        private string userNotExist = "Incorrect username or password";
+        private string incorrectPath = "Incorrect upload/download path";
+        private string userAlreadySignIn = "The user alredy signed in";
+        private string userDisable = "The user is disable by Admin";
+        private string incorrectConfigFile = "The ConfigFile is incorrect or not exist";
+
         private List<FileStatus> uploadFiles;
         private XmlHandler xmlHandler;
+        private NetworkStream stream;
         private User currentUser;
-        private bool startOver;
+        private bool reLogIn;
 
         public MainWindow()
         {
-            xmlHandler = new XmlHandler(CONFIG_FILE_NAME);
-            startOver = false;
-
             InitializeComponent();
             Hide();
+
+            xmlHandler = new XmlHandler(CONFIG_FILE_NAME);
+            reLogIn = false;
 
             if (File.Exists(CONFIG_FILE_NAME))
             {
                 // Config file exist, no re-login required.
-                SendUserAsJsonToServer();
+                SendUserToServer();
             }
 
             else
             {
-                startOver = true;
+                reLogIn = true;
                 Show();
             }
 
@@ -60,7 +62,7 @@ namespace MiniTorrent
         private void SignUp_Click(object sender, RoutedEventArgs e)
         {
             // Opens a new user registration page on the web portal.
-            Process.Start("http://localhost:62053/CreateNewUser.aspx");
+            Process.Start("http://localhost:62053/WebPages/CreateNewUser.aspx");
         }
 
         public bool CheckFields()
@@ -86,7 +88,7 @@ namespace MiniTorrent
                 return false;
             }
 
-            // Everything is fine
+            // Everything is fine.
             errorLabel.Visibility = Visibility.Hidden;
             return true;
         }
@@ -111,34 +113,34 @@ namespace MiniTorrent
 
             writer.WriteStartElement("username");
             writer.WriteString(userName);
-            writer.WriteEndElement(); //username
+            writer.WriteEndElement();
 
             writer.WriteStartElement("password");
             writer.WriteString(password);
-            writer.WriteEndElement(); //password
+            writer.WriteEndElement();
 
             writer.WriteStartElement("uploadPath");
             writer.WriteString(upload);
-            writer.WriteEndElement(); //upload
+            writer.WriteEndElement();
 
             writer.WriteStartElement("downloadPath");
             writer.WriteString(download);
-            writer.WriteEndElement(); //download
+            writer.WriteEndElement();
 
             writer.WriteStartElement("ip");
             writer.WriteString(GetIPAddress());
-            writer.WriteEndElement(); //ip
+            writer.WriteEndElement();
 
             writer.WriteStartElement("upPort");
             writer.WriteString(UP_PORT.ToString());
-            writer.WriteEndElement(); //upPort
+            writer.WriteEndElement();
 
             writer.WriteStartElement("downPort");
             writer.WriteString(SERVER_PORT.ToString());
-            writer.WriteEndElement(); //downPort
+            writer.WriteEndElement();
 
             AddUserFilesToXml(writer);
-            writer.WriteEndElement(); //User
+            writer.WriteEndElement(); // User
             writer.WriteEndDocument();
             writer.Close();
         }
@@ -152,12 +154,12 @@ namespace MiniTorrent
                 writer.WriteStartElement("File");
                 writer.WriteStartElement("FileName");
                 writer.WriteString(key);
-                writer.WriteEndElement(); //FileName
+                writer.WriteEndElement();
 
                 writer.WriteStartElement("FileSize");
                 writer.WriteString(files[key].ToString());
-                writer.WriteEndElement(); //FileSize
-                writer.WriteEndElement(); //File
+                writer.WriteEndElement();
+                writer.WriteEndElement(); // File
             }
         }
 
@@ -196,7 +198,7 @@ namespace MiniTorrent
         }
 
         // Send for user Login.
-        public async void SendUserAsJsonToServer()
+        public async void SendUserToServer()
         {
             try
             {
@@ -205,7 +207,7 @@ namespace MiniTorrent
 
                 if (user != null)
                 {
-                    if (!startOver)
+                    if (!reLogIn)
                     {
                         UpdateFileList(user);
                     }
@@ -234,17 +236,17 @@ namespace MiniTorrent
                 }
                 else
                 {
-                    ShowErrorLabel(IncorrectConfigFile);
+                    ShowErrorLabel(incorrectConfigFile);
                 }
             }
             catch (Exception e)
             {
-                MessageBoxResult result = MessageBox.Show("Unable to connect to server\n" + e);
+                MessageBoxResult result = MessageBox.Show("Failed to connect to server.\n" + e);
                 this.Close();
             }
         }
 
-        // When Login with config file, check for file changes in specific path.
+        // When Login with config file, update file list.
         private void UpdateFileList(User user)
         {
             Dictionary<string, long> files = GetAllFiles(user.UploadPath);
@@ -280,14 +282,14 @@ namespace MiniTorrent
                     if (uploadFiles == null)
                         GetAllFiles(currentUser.UploadPath.Trim());
 
-                    UserControlPanel userControlPanel = new UserControlPanel(stream, uploadFiles, currentUser);
+                    UserWindow userControlPanel = new UserWindow(stream, uploadFiles, currentUser);
                     userControlPanel.Show();
 
                     errorLabel.Visibility = Visibility.Hidden;
                     this.Close();
                     break;
                 case 2:
-                    ShowErrorLabel(userAlreadyConnected);
+                    ShowErrorLabel(userAlreadySignIn);
                     break;
                 case 3:
                     ShowErrorLabel(userDisable);
@@ -299,7 +301,7 @@ namespace MiniTorrent
         {
             errorLabel.Content = theError;
             errorLabel.Visibility = Visibility.Visible;
-            startOver = true;
+            reLogIn = true;
             this.Show();
         }
 
@@ -329,7 +331,7 @@ namespace MiniTorrent
             if (CheckFields())
             {
                 BuildXmlFile();
-                SendUserAsJsonToServer();
+                SendUserToServer();
             }
         }
 

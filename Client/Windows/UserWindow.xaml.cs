@@ -17,10 +17,10 @@ namespace MiniTorrent
     /// <summary>
     /// Interaction logic for UserControlPanel.xaml
     /// </summary>
-    public partial class UserControlPanel : Window
+    public partial class UserWindow : Window
     {
         private const int BUFFER_SIZE = 50000;
-        private const string REFLECTION_DLL_FILE_NAME = "MyReflection.dll";
+        public const string REFLECTION_DLL_FILE_NAME = "MyReflection.dll";
 
         // FileNotFoundLabel
         private string emptyFields = "Search field is empty";
@@ -44,7 +44,7 @@ namespace MiniTorrent
         private TransferFileDetails TransferFileDetails { get; set; }
 
 
-        public UserControlPanel(NetworkStream stream, List<FileStatus> uploadFiles, User currentUser)
+        public UserWindow(NetworkStream stream, List<FileStatus> uploadFiles, User currentUser)
         {
             InitializeComponent();
 
@@ -52,10 +52,10 @@ namespace MiniTorrent
             isActiveUser = true;
             this.stream = stream;
 
-            UserControlPanel.downloadFiles = new List<FileStatus>();
-            UserControlPanel.uploadFiles = new List<FileStatus>();
-            UserControlPanel.uploadFiles = uploadFiles;
-            UserControlPanel.currentUser = currentUser;
+            UserWindow.downloadFiles = new List<FileStatus>();
+            UserWindow.uploadFiles = new List<FileStatus>();
+            UserWindow.uploadFiles = uploadFiles;
+            UserWindow.currentUser = currentUser;
             upload_DataGrid.ItemsSource = uploadFiles;
             download_DataGrid.ItemsSource = downloadFiles;
 
@@ -625,23 +625,10 @@ namespace MiniTorrent
                 UpdateDataGrid();
 
                 DownloadFileHandler downloadFile = new DownloadFileHandler(TransferFileDetails, download_DataGrid);
+
+                dataGrid.SelectedItem = null;
+                dataGrid_LostFocus(null, null);
             }
-        }
-
-        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            DownloadButton.Visibility = Visibility.Visible;
-        }
-
-        private void dataGrid_LostFocus(object sender, RoutedEventArgs e)
-        {
-            //DownloadButton.Visibility = Visibility.Hidden;
-        }
-
-        private void dataGrid_GotFocus(object sender, RoutedEventArgs e)
-        {
-            DownloadButton.Visibility = Visibility.Visible;
-
         }
 
         private void fileNameTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -650,6 +637,18 @@ namespace MiniTorrent
             {
                 Btn_search_Click(null, null);
             }
+        }
+
+        private void dataGrid_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (dataGrid.SelectedItems.Count != 1)
+                DownloadButton.Visibility = Visibility.Hidden;
+        }
+
+        private void dataGrid_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (dataGrid.SelectedItems.Count == 1)
+                DownloadButton.Visibility = Visibility.Visible;
         }
     }
 }
