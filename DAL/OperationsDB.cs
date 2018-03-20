@@ -1,5 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
+using MiniTorrent;
 
 namespace DAL
 {
@@ -24,7 +24,9 @@ namespace DAL
                 {
                     res[0]++;
                     if (user.IsActive)
+                    {
                         res[1]++;
+                    }
                 }
             }
 
@@ -102,8 +104,9 @@ namespace DAL
 
         public int GetUserStatus(string userName, string password)
         {
+            // Using SignInWindow.EServerResponse enum.
             // 0 = User not exist.
-            // 1 = Connecting the user.
+            // 1 = SuccessSignIn.
             // 2 = User alredy connected.
             // 3 = User Disable.
 
@@ -120,7 +123,7 @@ namespace DAL
                     if (!user.IsDisable)
                     {
                         if (user.IsActive)
-                            return 2; // User alredy connected.
+                            return (int)SignInWindow.EServerResponse.UserAlredyConnected;
                         else
                         {
                             user.IsActive = true;
@@ -128,15 +131,15 @@ namespace DAL
                             {
                                 DB.SubmitChanges();
                             }
-                            return 1; // Connecting the user.
+                            return (int)SignInWindow.EServerResponse.SuccessSignIn;
                         }
                     }
                     else
-                        return 3; // User Disable.
+                        return (int)SignInWindow.EServerResponse.UserDisable;
                 }
             }
 
-            return 0; // User not exist.
+            return (int)SignInWindow.EServerResponse.UserNotExist;
         }
 
         public void LogOffUser(string userName)

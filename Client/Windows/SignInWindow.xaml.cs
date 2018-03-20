@@ -16,7 +16,7 @@ namespace MiniTorrent
     /// </summary>
     public partial class SignInWindow : Window
     {
-        enum EServerResponse
+        public enum EServerResponse
         {
             UserNotExist,
             SuccessSignIn,
