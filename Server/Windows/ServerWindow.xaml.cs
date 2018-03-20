@@ -19,13 +19,13 @@ namespace Server
         private const int SERVER_LISTENER_PORT = 8006;
         private string serverIP;
 
-        private delegate void delegate1(string s);
-        private TcpListener serverListener;
-        private static BackgroundWorker bw;
         private static OperationsDB DB = new OperationsDB();
+        private TcpListener serverListener;
+        private static BackgroundWorker bwWriteToLog;
         private static BackgroundWorker bwUpdateUserList;
         private static BackgroundWorker bwUpdateFileList;
-        private delegate void selectDelegate(User u);
+        private delegate void delegate1(string s);
+        private delegate void selectDelegate(User user);
         private delegate void updateDelegate();
         private static object thisLock = new object();
 
@@ -39,17 +39,15 @@ namespace Server
 
             InitializeComponent();
 
-            bw = new BackgroundWorker();
-            bw.DoWork += Bw_DoWork;
-
             ActiveUsers = new List<User>();
             ServerFileList = new Dictionary<FileDetails, List<User>>();
             dataGrid_users.ItemsSource = ActiveUsers;
-            //dataGrid_files.ItemsSource = ServerFileList;
 
+            bwWriteToLog = new BackgroundWorker();
+            bwWriteToLog.DoWork += Bw_DoWork;
             bwUpdateUserList = new BackgroundWorker();
-            bwUpdateFileList = new BackgroundWorker();
             bwUpdateUserList.DoWork += BwUpdate_DoWork;
+            bwUpdateFileList = new BackgroundWorker();
             bwUpdateFileList.DoWork += BwSelect_DoWork;
 
             GetIpAddress();
@@ -66,7 +64,7 @@ namespace Server
             }
         }
 
-        // Writing a message to Log in the background
+        // Append message to Log in the background.
         private void Bw_DoWork(object sender, DoWorkEventArgs e)
         {
             delegate1 delegate1 = new delegate1(WriteToLog);
@@ -133,19 +131,19 @@ namespace Server
 
                 // Read size.
                 await stream.ReadAsync(jsonSize, 0, 4);
-                while (bw.IsBusy) ;
+                while (bwWriteToLog.IsBusy) ;
                 jsonBytes = new byte[BitConverter.ToInt32(jsonSize, 0)];
 
                 // Read User object as Json. 
                 await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
-                while (bw.IsBusy) ;
+                while (bwWriteToLog.IsBusy) ;
 
                 // Convert to user object from Json.
                 jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
                 currentUser = JsonConvert.DeserializeObject<User>(jsonFile);
 
-                while (bw.IsBusy) ;
-                bw.RunWorkerAsync(currentUser.UserName + " connected to server.\n");
+                while (bwWriteToLog.IsBusy) ;
+                bwWriteToLog.RunWorkerAsync(currentUser.UserName + " connected to server.\n");
 
                 // Update users list.
                 AddNewUser(stream, currentUser);
@@ -189,7 +187,7 @@ namespace Server
 
                 catch (Exception e)
                 {
-                    MessageBoxResult result = MessageBox.Show(e.ToString(), "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    MessageBoxResult result = MessageBox.Show("A problem occurred while adding a new user\n" + e);
                 }
             }
 
@@ -225,14 +223,14 @@ namespace Server
                             foreach (FileDetails file in currentUser.FileList)
                                 DB.DeletePeerFromFile(file.FileName, file.FileSize);
 
-                            while (bw.IsBusy) ;
-                            bw.RunWorkerAsync(currentUser.UserName + " is Loged off now.\n");
+                            while (bwWriteToLog.IsBusy) ;
+                            bwWriteToLog.RunWorkerAsync(currentUser.UserName + " is Loged off now.\n");
 
                             break;
                         }
 
-                        while (bw.IsBusy) ;
-                        bw.RunWorkerAsync(currentUser.UserName + " send file request.\n");
+                        while (bwWriteToLog.IsBusy) ;
+                        bwWriteToLog.RunWorkerAsync(currentUser.UserName + " send file request.\n");
 
                         bool fileExistInServer = false;
 
@@ -259,7 +257,7 @@ namespace Server
                     }
                     catch (Exception e)
                     {
-                        MessageBoxResult result = MessageBox.Show(e.ToString(), "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        MessageBoxResult result = MessageBox.Show("A problem occurred in a file request from the client\n" + e);
                     }
                 }
             }
@@ -380,37 +378,27 @@ namespace Server
             //Close();
         }
 
-
-
-
-
-
-        private void UpdateFileList(User selectedUser)
-        {
-            dataGrid_files.ItemsSource = selectedUser.FileList;
-
-            dataGrid_files.Items.Refresh();
-
-            //dataGrid_files.Columns.RemoveAt(2);
-            //dataGrid_files.Columns.RemoveAt(3);
-            //dataGrid_files.Columns.RemoveAt(3);
-        }
-
-        private void UpdateUserList()
-        {
-            dataGrid_users.Items.Refresh();
-        }
-
         private void BwSelect_DoWork(object sender, DoWorkEventArgs e)
         {
             selectDelegate selectDel = new selectDelegate(UpdateFileList);
             dataGrid_files.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, selectDel, (User)e.Argument);
         }
 
+        private void UpdateFileList(User selectedUser)
+        {
+            dataGrid_files.ItemsSource = selectedUser.FileList;
+            dataGrid_files.Items.Refresh();
+        }
+
         private void BwUpdate_DoWork(object sender, DoWorkEventArgs e)
         {
             updateDelegate updateDel = new updateDelegate(UpdateUserList);
             dataGrid_users.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, updateDel);
+        }
+
+        private void UpdateUserList()
+        {
+            dataGrid_users.Items.Refresh();
         }
 
         // Execute when user Log in.
@@ -480,16 +468,6 @@ namespace Server
 
             while (bwUpdateUserList.IsBusy) ;
             bwUpdateUserList.RunWorkerAsync();
-        }
-
-        private bool IsActiveUser(string userName, string password)
-        {
-            foreach (User user in ActiveUsers)
-            {
-                if (user.UserName.Equals(userName) && user.Password.Equals(password))
-                    return true;
-            }
-            return false;
         }
 
         private void DataGrid_users_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

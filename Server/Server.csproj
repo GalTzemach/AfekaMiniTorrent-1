@@ -60,7 +60,7 @@
     <Compile Include="Classes\SearchRequest.cs" />
     <Compile Include="Classes\FileDetails.cs" />
     <Compile Include="Classes\TransferFileDetails.cs" />
-    <Compile Include="Classes\Users.cs" />
+    <Compile Include="Classes\User.cs" />
     <Page Include="Windows\ServerWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
