@@ -177,7 +177,7 @@ namespace Client
 
                 foreach (FileStatus tempFileStatus in uploadFiles)
                 {
-                    if (tempFileStatus.Equals(fileRequest))
+                    if (tempFileStatus.FileName.Equals(fileRequest.FileName))
                     {
                         fileStatus = tempFileStatus;
                         break;

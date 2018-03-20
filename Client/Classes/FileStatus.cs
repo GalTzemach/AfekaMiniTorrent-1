@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 
 namespace Client
 {
-    public class FileStatus : ObservableCollection<FileDetails>, IEquatable<FileStatus>
+    public class FileStatus : ObservableCollection<FileDetails>
     {
         public double FileSizeMB { get { return Math.Round(((double)FileSize / 1024 / 1024), 4); } }
         public double BitRateMbps { get { return Math.Round(BitRate, 4); } }
@@ -21,11 +21,6 @@ namespace Client
             this.FileSize = fileSize;
             this.Status = status;
             this.PercentCompleted = 0;
-        }
-
-        public bool Equals(FileStatus other)
-        {
-            return this.FileName == other.FileName && this.FileSize == other.FileSize;
         }
     }
 }
