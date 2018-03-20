@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 
-namespace MiniTorrent
+namespace Client
 {
     public class XmlHandler
     {

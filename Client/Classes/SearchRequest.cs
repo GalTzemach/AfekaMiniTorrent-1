@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MiniTorrent
+namespace Client
 {
     [Serializable]
     public class SearchRequest

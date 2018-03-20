@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MiniTorrent
+namespace Client
 {
     [Serializable]
     public class User : IEquatable<User>

@@ -9,7 +9,7 @@ using System.Text;
 using System.Windows;
 using System.Xml;
 
-namespace MiniTorrent
+namespace Client
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

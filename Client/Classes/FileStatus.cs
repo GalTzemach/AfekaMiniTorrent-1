@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 
-namespace MiniTorrent
+namespace Client
 {
     public class FileStatus : ObservableCollection<FileDetails>, IEquatable<FileStatus>
     {

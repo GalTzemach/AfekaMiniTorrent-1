@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using MiniTorrent;
+using Client;
 
 namespace DAL
 {

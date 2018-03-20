@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MiniTorrent
+namespace Client
 {
     public class FileDetails : IEquatable<FileDetails>
     {

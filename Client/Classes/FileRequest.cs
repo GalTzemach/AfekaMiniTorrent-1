@@ -1,4 +1,4 @@
-﻿namespace MiniTorrent
+﻿namespace Client
 {
     public class FileRequest
     {

@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace MiniTorrent
+namespace Client
 {
     /// <summary>
     /// Interaction logic for App.xaml

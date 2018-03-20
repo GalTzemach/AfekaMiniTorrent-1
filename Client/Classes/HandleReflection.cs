@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Text;
 
-namespace MiniTorrent
+namespace Client
 {
     class HandleReflection
     {

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MiniTorrent.Properties
+namespace Client.Properties
 {
 
 

@@ -12,7 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace MiniTorrent
+namespace Client
 {
     /// <summary>
     /// Interaction logic for UserControlPanel.xaml
