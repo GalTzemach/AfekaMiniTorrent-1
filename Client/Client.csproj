@@ -75,7 +75,7 @@
     </Compile>
     <Compile Include="Classes\User.cs" />
     <Compile Include="Classes\XmlHandler.cs" />
-    <Page Include="Windows\SignIn.xaml">
+    <Page Include="Windows\SignInWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -83,8 +83,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Windows\SignIn.xaml.cs">
-      <DependentUpon>SignIn.xaml</DependentUpon>
+    <Compile Include="Windows\SignInWindow.xaml.cs">
+      <DependentUpon>SignInWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Windows\UserWindow.xaml">

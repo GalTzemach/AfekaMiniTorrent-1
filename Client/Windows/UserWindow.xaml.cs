@@ -19,12 +19,12 @@ namespace MiniTorrent
     /// </summary>
     public partial class UserWindow : Window
     {
-        private const int BUFFER_SIZE = 50000;
         public const string REFLECTION_DLL_FILE_NAME = "MyReflection.dll";
+        private const int BUFFER_SIZE = 50000;
 
-        // FileNotFoundLabel
-        private string emptyFields = "Search field is empty";
-        private string fileNotFound = "File not found";
+        // Error messages.
+        private const string emptyFields = "Search field is empty";
+        private const string fileNotFound = "File not found";
 
         private NetworkStream stream;
         private static User currentUser;
@@ -40,9 +40,7 @@ namespace MiniTorrent
         private static bool isActiveUser;
 
         private List<TransferFileDetails> transferFileList;
-
-        private TransferFileDetails TransferFileDetails { get; set; }
-
+        private TransferFileDetails TransferFileDetails;
 
         public UserWindow(NetworkStream stream, List<FileStatus> uploadFiles, User currentUser)
         {
@@ -67,7 +65,7 @@ namespace MiniTorrent
             Title = currentUser.UserName;
 
             CheckForReflactionFile();
-            StartListeningForFileReq();
+            StartListeningForFileRequest();
         }
 
         // Check if exist reflaction.dll file.
@@ -91,7 +89,7 @@ namespace MiniTorrent
         private void BwReflactionButton_DoWork(object sender, DoWorkEventArgs e)
         {
             delegate1 del = new delegate1(ShowReclactionButton);
-            reflection.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, del);
+            Btn_reflection.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, del);
         }
 
         private void UpdateDataGrid()
@@ -102,11 +100,11 @@ namespace MiniTorrent
 
         private void ShowReclactionButton()
         {
-            reflection.Visibility = Visibility.Visible;
+            Btn_reflection.Visibility = Visibility.Visible;
         }
 
         // Client listening for other client file request.
-        public async void StartListeningForFileReq()
+        public async void StartListeningForFileRequest()
         {
             TcpListener clientListener = null;
 
@@ -117,6 +115,7 @@ namespace MiniTorrent
 
                 while (isActiveUser)
                 {
+                    // Get new file request.
                     TcpClient clientSocket = await clientListener.AcceptTcpClientAsync();
                     UploadFileHandler uploadFile = new UploadFileHandler(clientSocket);
                 }
@@ -124,7 +123,7 @@ namespace MiniTorrent
 
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                MessageBoxResult result = MessageBox.Show("Failed to get new file request.\n" + e);
             }
 
             finally
@@ -151,7 +150,7 @@ namespace MiniTorrent
 
             public async void GetFileRequest()
             {
-                string jsonFile;
+                string jsonString;
                 byte[] jsonBytes;
                 byte[] jsonSize = new byte[4]; // int 32.
 
@@ -163,8 +162,8 @@ namespace MiniTorrent
                 await stream.ReadAsync(jsonBytes, 0, jsonBytes.Length);
 
                 // Convert to FileRequest object.
-                jsonFile = ASCIIEncoding.ASCII.GetString(jsonBytes);
-                fileRequest = JsonConvert.DeserializeObject<FileRequest>(jsonFile);
+                jsonString = ASCIIEncoding.ASCII.GetString(jsonBytes);
+                fileRequest = JsonConvert.DeserializeObject<FileRequest>(jsonString);
 
                 StartUploadFile();
             }
@@ -178,10 +177,10 @@ namespace MiniTorrent
 
                 foreach (FileStatus tempFileStatus in uploadFiles)
                 {
-                    if (tempFileStatus.FileName.Equals(fileRequest.FileName))
+                    if (tempFileStatus.Equals(fileRequest))
                     {
                         fileStatus = tempFileStatus;
-                        //break;
+                        break;
                     }
                 }
 
@@ -198,7 +197,7 @@ namespace MiniTorrent
                     int AmountOfByteRead = 0;
                     byte[] buffer = new byte[BUFFER_SIZE];
 
-                    // Looking for where you start sending
+                    // Looking from where to start sending.
                     fileStream.Seek(fileRequest.FromByte, 0);
 
                     fileStatus.Status = "Uploading..";
@@ -232,12 +231,10 @@ namespace MiniTorrent
                 catch (Exception e)
                 {
                     fileStatus.Status = "Error uploading";
-
                     while (bwProgressBarUpdate.IsBusy) ;
                     bwProgressBarUpdate.RunWorkerAsync();
 
-                    Console.WriteLine("An Exception occurred while uploading a file" + "\n\t Exception:" + e.ToString());
-                    MessageBoxResult result = MessageBox.Show("There was a problem with uploading file: " + fileRequest.FileName, "Alert");
+                    MessageBoxResult result = MessageBox.Show("There was a problem with uploading file: " + fileRequest.FileName + "\n" + e);
                 }
 
                 finally
@@ -256,10 +253,7 @@ namespace MiniTorrent
         // This class handle file downloads.
         public class DownloadFileHandler
         {
-            //private string fileName;
-            //private long fileSize;
-            //private int numOfPeers;
-
+            // In order to determine when all peers finish their work.
             private AutoResetEvent[] autoResetEvents;
             private TransferFileDetails transferFileDetails;
             private DataGrid downloadDataGrid;
@@ -275,10 +269,6 @@ namespace MiniTorrent
             {
                 this.transferFileDetails = transferFileDetails;
                 this.downloadDataGrid = downloadDataGrid;
-
-                //this.fileName = transferFileDetails.FileName;
-                //this.fileSize = transferFileDetails.FileSize;
-                //this.numOfPeers = transferFileDetails.NumOfPeers;
 
                 bytesPerPeer = (int)this.transferFileDetails.FileSize / this.transferFileDetails.NumOfPeers;
 
@@ -302,7 +292,7 @@ namespace MiniTorrent
 
                 catch (Exception e)
                 {
-                    MessageBoxResult result = MessageBox.Show(e.ToString(), " Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    MessageBoxResult result = MessageBox.Show("Failed to download file: " + transferFileDetails.FileName + "\n" + e);
                 }
 
                 SplitDownloadWork();
@@ -311,7 +301,6 @@ namespace MiniTorrent
             // Split the download (by P2P concept).
             private void SplitDownloadWork()
             {
-                // In order to determine when all peers finish their work.
                 autoResetEvents = new AutoResetEvent[transferFileDetails.NumOfPeers];
 
                 for (int i = 0; i < transferFileDetails.NumOfPeers; i++)
@@ -384,7 +373,7 @@ namespace MiniTorrent
 
             private void ReadFileRequest(NetworkStream stream, FileRequest fileRequest, FileStatus fileStatus, int peerNumber)
             {
-                // Read file request you sent.
+                // Read file request you sent before.
                 byte[] buffer = new byte[BUFFER_SIZE];
 
                 int AmountOfByteRead = 0;
@@ -394,7 +383,7 @@ namespace MiniTorrent
 
                 try
                 {
-                    // Loop until read all relevant bytes.
+                    // Loop until read all relevant data.
                     while (currentPos < fileRequest.ToByte && fileStream.CanWrite && isActiveUser)
                     {
                         // Read data.
@@ -423,10 +412,8 @@ namespace MiniTorrent
                 catch (Exception e)
                 {
                     isValidFile = false;
-
                     fileStream.Close();
-                    Console.WriteLine(e);
-                    MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName, "Alert");
+                    MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName + "\n" + e);
                 }
 
                 finally
@@ -446,6 +433,7 @@ namespace MiniTorrent
                         fileStatus = tempFileStatus;
                 }
 
+                // Everything is fine.
                 if (isValidFile)
                 {
                     stopWatch.Stop();
@@ -456,6 +444,7 @@ namespace MiniTorrent
                         timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
 
                     fileStatus.TotaTime = elapsedTime;
+                    // Bit rate in Mbps (mega bit per second).
                     fileStatus.BitRate = (fileStatus.FileSize / 1024 / 1024 * 8) / timeSpan.TotalSeconds;
                     fileStatus.Status = "Download completed";
 
@@ -473,8 +462,8 @@ namespace MiniTorrent
                 {
                     fileStatus.PercentCompleted = 0;
                     fileStatus.Status = "Error downloading";
-                    MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName, "Alert");
-                    // MessageBox.Show("There was a problem with " + transferFileDetails.FileName + "transfer");
+
+                    MessageBoxResult result = MessageBox.Show("There was a problem with downloading file: " + transferFileDetails.FileName);
                 }
 
                 while (bwProgressBarUpdate.IsBusy) ;
@@ -505,16 +494,13 @@ namespace MiniTorrent
 
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                MessageBoxResult result = MessageBox.Show("A problem occurred while exiting the app\n" + ex);
             }
 
         }
 
         private void Btn_reflection_Click(object sender, RoutedEventArgs e)
         {
-            //EnterNumbersMsg enterNumbers = new EnterNumbersMsg(currentUser.DownloadPath);
-            //enterNumbers.ShowDialog();
-
             string reflectionMessage = HandleReflection.GetAuthors(currentUser.DownloadPath);
             MessageBox.Show(reflectionMessage);
         }
@@ -524,31 +510,31 @@ namespace MiniTorrent
             // Delete configuration file.
             File.Delete("MyConfig.xml");
 
-            MainWindow m = new MainWindow();
+            SignInWindow signInWindow = new SignInWindow();
             this.Close();
         }
 
         private void Btn_search_Click(object sender, RoutedEventArgs e)
         {
-            string fileName = fileNameTextBox.Text.Trim();
+            string fileName = SearchFile_TextBox.Text.Trim();
 
-            DownloadButton.Visibility = Visibility.Hidden;
+            Btn_download.Visibility = Visibility.Hidden;
 
             if (string.IsNullOrEmpty(fileName.Trim()))
             {
-                SearchStatusLabel.Content = emptyFields;
-                SearchStatusLabel.Visibility = Visibility.Visible;
+                Lbl_SearchStatus.Content = emptyFields;
+                Lbl_SearchStatus.Visibility = Visibility.Visible;
 
-                ///G
                 transferFileList = new List<TransferFileDetails>();
                 dataGrid.ItemsSource = transferFileList;
-                DownloadButton.Visibility = Visibility.Hidden;
+                Btn_download.Visibility = Visibility.Hidden;
             }
+
             else
             {
-                SearchStatusLabel.Visibility = Visibility.Hidden;
+                Lbl_SearchStatus.Visibility = Visibility.Hidden;
                 SendSearchFileRequest(fileName);
-                DownloadButton.Visibility = Visibility.Hidden;
+                Btn_download.Visibility = Visibility.Hidden;
             }
         }
 
@@ -574,21 +560,20 @@ namespace MiniTorrent
             if (answer[0] == 0)
             {
                 // Error.
-                SearchStatusLabel.Content = fileNotFound;
-                SearchStatusLabel.Visibility = Visibility.Visible;
+                Lbl_SearchStatus.Content = fileNotFound;
+                Lbl_SearchStatus.Visibility = Visibility.Visible;
 
-                ///G
-                DownloadButton.Visibility = Visibility.Hidden;
+                Btn_download.Visibility = Visibility.Hidden;
                 transferFileList = new List<TransferFileDetails>();
                 dataGrid.ItemsSource = transferFileList;
-                DownloadButton.Visibility = Visibility.Hidden;
+                Btn_download.Visibility = Visibility.Hidden;
                 return;
             }
 
             else
             {
                 // Success.
-                SearchStatusLabel.Visibility = Visibility.Hidden;
+                Lbl_SearchStatus.Visibility = Visibility.Hidden;
                 GetResponseFromServer();
             }
         }
@@ -610,16 +595,39 @@ namespace MiniTorrent
             // Convert json to List<TransferFileDetails>.
             transferFileList = new List<TransferFileDetails>();
             transferFileList = JsonConvert.DeserializeObject<List<TransferFileDetails>>(jsonString);
+
+            IgnoreMyFiles(transferFileList);
+
             dataGrid.ItemsSource = transferFileList;
         }
 
-        private void DownloadButton_Click(object sender, RoutedEventArgs e)
+        private void IgnoreMyFiles(List<TransferFileDetails> transferFileList)
+        {
+            List<TransferFileDetails> fileToRemove = new List<TransferFileDetails>();
+
+            foreach (var file in transferFileList)
+            {
+                foreach (var peer in file.PeersList)
+                {
+                    if (peer.Ip == currentUser.Ip)
+                    {
+                        fileToRemove.Add(file);
+                    }
+                }
+            }
+
+            foreach (var item in fileToRemove)
+            {
+                transferFileList.Remove(item);
+            }
+        }
+
+        private void Btn_download_Click(object sender, RoutedEventArgs e)
         {
             TransferFileDetails = (TransferFileDetails)dataGrid.SelectedItem;
 
             if (TransferFileDetails != null)
             {
-                //TransferFileDetails transferFileDetails = TransferFileDetails;///G
                 downloadFiles.Add(new FileStatus(TransferFileDetails.FileName, TransferFileDetails.FileSize, "Downloading.."));
 
                 UpdateDataGrid();
@@ -631,7 +639,7 @@ namespace MiniTorrent
             }
         }
 
-        private void fileNameTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void SearchFile_TextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Return)
             {
@@ -642,13 +650,13 @@ namespace MiniTorrent
         private void dataGrid_LostFocus(object sender, RoutedEventArgs e)
         {
             if (dataGrid.SelectedItems.Count != 1)
-                DownloadButton.Visibility = Visibility.Hidden;
+                Btn_download.Visibility = Visibility.Hidden;
         }
 
         private void dataGrid_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (dataGrid.SelectedItems.Count == 1)
-                DownloadButton.Visibility = Visibility.Visible;
+                Btn_download.Visibility = Visibility.Visible;
         }
     }
 }

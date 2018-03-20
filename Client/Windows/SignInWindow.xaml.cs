@@ -14,8 +14,16 @@ namespace MiniTorrent
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class SignInWindow : Window
     {
+        enum EServerResponse
+        {
+            UserNotExist,
+            SuccessSignIn,
+            UserAlredyConnected,
+            UserDisable
+        };
+
         // Server information.
         private const string SERVER_IP = "192.168.1.156";
         private const int SERVER_PORT = 8006;
@@ -24,12 +32,12 @@ namespace MiniTorrent
         private const int UP_PORT = 8005;
 
         // Error massegeges.
-        private string emptyFields = "There is empty fields";
-        private string userNotExist = "Incorrect username or password";
-        private string incorrectPath = "Incorrect upload/download path";
-        private string userAlreadySignIn = "The user alredy signed in";
-        private string userDisable = "The user is disable by Admin";
-        private string incorrectConfigFile = "The ConfigFile is incorrect or not exist";
+        private const string emptyFields = "There is empty fields";
+        private const string userNotExist = "Incorrect username or password";
+        private const string incorrectPath = "Incorrect upload/download path";
+        private const string userAlreadySignIn = "The user alredy signed in";
+        private const string userDisable = "The user is disable by Admin";
+        private const string incorrectConfigFile = "The ConfigFile is incorrect or not exist";
 
         private List<FileStatus> uploadFiles;
         private XmlHandler xmlHandler;
@@ -37,7 +45,7 @@ namespace MiniTorrent
         private User currentUser;
         private bool reLogIn;
 
-        public MainWindow()
+        public SignInWindow()
         {
             InitializeComponent();
             Hide();
@@ -57,12 +65,6 @@ namespace MiniTorrent
                 Show();
             }
 
-        }
-
-        private void SignUp_Click(object sender, RoutedEventArgs e)
-        {
-            // Opens a new user registration page on the web portal.
-            Process.Start("http://localhost:62053/WebPages/CreateNewUser.aspx");
         }
 
         public bool CheckFields()
@@ -268,17 +270,16 @@ namespace MiniTorrent
 
             // Read answer from server.
             await stream.ReadAsync(answer, 0, 1);
-            // 0 = User not exist.
-            // 1 = Connecting the user.
-            // 2 = User alredy connected.
-            // 3 = User Disable.
 
             switch (answer[0])
             {
-                case 0:
+                case (int)EServerResponse.UserNotExist:
+
                     ShowErrorLabel(userNotExist);
                     break;
-                case 1:
+
+                case (int)EServerResponse.SuccessSignIn:
+
                     if (uploadFiles == null)
                         GetAllFiles(currentUser.UploadPath.Trim());
 
@@ -288,10 +289,14 @@ namespace MiniTorrent
                     errorLabel.Visibility = Visibility.Hidden;
                     this.Close();
                     break;
-                case 2:
+
+                case (int)EServerResponse.UserAlredyConnected:
+
                     ShowErrorLabel(userAlreadySignIn);
                     break;
-                case 3:
+
+                case (int)EServerResponse.UserDisable:
+
                     ShowErrorLabel(userDisable);
                     break;
             }
@@ -305,7 +310,7 @@ namespace MiniTorrent
             this.Show();
         }
 
-        // Because pc can have multiply ip addresses.
+        // Gets IP address automatically.
         public string GetIPAddress()
         {
             using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
