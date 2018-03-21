@@ -62,7 +62,14 @@
                         <DataGridTemplateColumn Header="Progress" Width="*" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <ProgressBar Value="{Binding PercentCompleted, Mode=OneWay}" Minimum="0" Maximum="100" />
+                                    <ProgressBar Value="{Binding PercentCompleted, Mode=OneWay}" Minimum="0" Maximum="100" >
+                                        <ProgressBar.Effect>
+                                            <BlurEffect/>
+                                        </ProgressBar.Effect>
+                                        <ProgressBar.Foreground>
+                                            <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}"/>
+                                        </ProgressBar.Foreground>
+                                    </ProgressBar>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -82,7 +89,14 @@
                     <DataGridTemplateColumn Header="Progress" IsReadOnly="True" Width="*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <ProgressBar Value="{Binding PercentCompleted, Mode=OneWay}" Minimum="0" Maximum="100" />
+                                <ProgressBar Value="{Binding PercentCompleted, Mode=OneWay}" Minimum="0" Maximum="100">
+                                    <ProgressBar.Foreground>
+                                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}"/>
+                                    </ProgressBar.Foreground>
+                                    <ProgressBar.Effect>
+                                        <BlurEffect/>
+                                    </ProgressBar.Effect>
+                                </ProgressBar>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
